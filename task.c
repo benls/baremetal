@@ -32,7 +32,7 @@ static struct task task_zero = { .next = &task_zero };
 
 struct task* current_task = &task_zero;
 
-struct task* new_task(struct task *task, void* func, void* stack) {
+struct task* new_task(struct task *task, void (*func)(void), void* stack) {
     struct cpu_regs *regs;
 
     task->next = NULL;

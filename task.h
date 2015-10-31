@@ -10,7 +10,7 @@ struct task {
 
 extern struct task *current_task;
 
-struct task* new_task(struct task *task, void* func, void* stack);
+struct task* new_task(struct task *task, void (*func)(void), void* stack);
 void queue_task(struct task* task);
 void task_switch(void);
 void do_task_switch(struct task *new, struct task *old);
