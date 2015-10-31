@@ -2,8 +2,10 @@ ENTRY(_start)
  
 SECTIONS
 {
-    /* Starts at LOADER_ADDR. */
-    . = 0x40200800;
+    /* address for qemu */
+    /*. = 0x40200800;*/
+    /* address for am335x */
+    . = 0x80000000;
     __start = .;
     __text_start = .;
     .text :

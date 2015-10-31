@@ -14,4 +14,4 @@ arm-none-eabi-gcc $gcc_flags $c_flags -c task.c
 arm-none-eabi-gcc $gcc_flags -T start.ld -o start.elf start.o main.o uart.o task_switch.o task.o
 arm-none-eabi-objcopy start.elf -O binary start.bin
 python make_mlo.py
-./block.sh
+#./block.sh

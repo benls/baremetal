@@ -17,14 +17,19 @@
 #define MCRVAL ( 1 | 2 ) /* MCR/DTS */
 #define FCRVAL ( 1 | 2 | 4 ) 
 
-#define BASE 0x49020000
+/*qemu addr
+* #define BASE 0x49020000
+*/
+/* am335x addr */
+#define BASE 0x44e09000
 
-#define w32(a,v) (*(unsigned long*)(BASE + (a)) = (v))
-#define r32(a) (*(unsigned long*)(BASE + (a)))
-#define w16(a,v) (*(unsigned short*)(BASE + (a)) = (v))
+#define w32(a,v) (*(volatile unsigned long*)(BASE + (a)) = (v))
+#define r32(a) (*(volatile unsigned long*)(BASE + (a)))
+#define w16(a,v) (*(volatile unsigned short*)(BASE + (a)) = (v))
 
 void uart_init(void)
 {
+#if 0
     if (r32(LSR) & LSR_THRE) {
         /*set_bgr();*/
         w32(MDR1, 0);
@@ -40,6 +45,7 @@ void uart_init(void)
     /*set_bgr();*/
 
     w32(MDR1, 0x7);
+#endif
 }
 
 void uart_putc(char c)
