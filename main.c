@@ -1,6 +1,8 @@
 #include "task.h"
 #include "uart.h"
 
+#include <string.h>
+
 extern u32 __bss_start;
 extern u32 __bss_end;
 
@@ -46,7 +48,5 @@ static void task_b_func(void) {
     }
 }
 static void zero_bss() {
-    u32 *i = &__bss_start;
-    while (i < &__bss_end)
-        *i++ = 0;
+    memset(&__bss_start, 0, &__bss_end - &__bss_start);
 }
