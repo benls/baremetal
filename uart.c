@@ -9,6 +9,7 @@
 #define THR 0
 
 #define LSR_THRE 0x20
+#define RXFIFOE (1<<0)
 #define LSR_TEMT 0x40 
 
 #define IERVAL 0
@@ -25,6 +26,7 @@
 
 #define w32(a,v) (*(volatile unsigned long*)(BASE + (a)) = (v))
 #define r32(a) (*(volatile unsigned long*)(BASE + (a)))
+#define r16(a) (*(volatile unsigned short*)(BASE + (a)))
 #define w16(a,v) (*(volatile unsigned short*)(BASE + (a)) = (v))
 
 void uart_init(void)
@@ -53,4 +55,11 @@ void uart_putc(char c)
     while ((r32(LSR) & LSR_THRE) == 0);
 
     w16(THR, c);
+}
+
+char uart_getc(void)
+{
+    while (!(r32(LSR) & RXFIFOE));
+
+    return (char)(r16(THR) & 0xff);
 }

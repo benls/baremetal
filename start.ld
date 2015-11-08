@@ -37,6 +37,7 @@ SECTIONS
         *(.mainstack)
     }
     __bss_start = .;
+    __bss_start__ = .;
     .bss :
     {
         bss = .;
@@ -44,5 +45,6 @@ SECTIONS
     }
     . = ALIGN(4096); /* align to page size */
     __bss_end = .;
+    __bss_end__ = .;
     __end = .;
 }

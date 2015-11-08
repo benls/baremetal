@@ -1,5 +1,6 @@
 #include "task.h"
 #include "uart.h"
+#include "debug.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -19,12 +20,19 @@ static void zero_bss(void);
 static void start_task_a(void);
 static void start_task_b(void);
 
+void __libc_init_array();
+
 int main(void) {
     zero_bss();
+    write(1, "Libc init array\r\n", strlen("Libc init array\r\n"));
+    __libc_init_array();
+    write(1, "Starting main...\r\n", strlen("Starting main...\r\n"));
     /* glibc calls sbrk with a huge number unless I do this */
-    malloc(0);
+    free(malloc(0));
+    write(1, "First malloc done...\r\n", strlen("First malloc done...\r\n"));
     for(unsigned i =0; i < 5; i++)
         printf("Testing printf... %d\r\n", i);
+    debug_main();
     start_task_a();
     start_task_b();
     for(;;)
@@ -56,5 +64,8 @@ static void task_b_func(void) {
 }
 
 static void zero_bss() {
-    memset(&__bss_start, 0, &__bss_end - &__bss_start);
+    for(char *c = (char*)&__bss_start; c < (char*)&__bss_end; c++)
+        *c = 0;
+    //why does this not work?
+    //memset(&__bss_start, 0, &__bss_end - &__bss_start);
 }

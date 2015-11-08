@@ -8,8 +8,8 @@
 _main_stack: .skip 4096
 
 .section ".text.boot"
-.globl _start
-_start:
+.globl my_start
+my_start:
     ldr r13, =_main_stack
     add r13, r13, #4096
     mov fp, #0
