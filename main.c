@@ -1,5 +1,6 @@
 #include "task.h"
 #include "uart.h"
+#include "util.h"
 #include "debug.h"
 
 #include <string.h>
@@ -19,17 +20,19 @@ static void task_b_func(void);
 static void zero_bss(void);
 static void start_task_a(void);
 static void start_task_b(void);
+static void disable_watchdog(void);
 
 void __libc_init_array();
 
 int main(void) {
     zero_bss();
-    write(1, "Libc init array\r\n", strlen("Libc init array\r\n"));
+    disable_watchdog();
+    debug("Libc init array\r\n");
     __libc_init_array();
-    write(1, "Starting main...\r\n", strlen("Starting main...\r\n"));
+    debug("Starting main...\r\n");
     /* glibc calls sbrk with a huge number unless I do this */
     free(malloc(0));
-    write(1, "First malloc done...\r\n", strlen("First malloc done...\r\n"));
+    debug("First malloc done...\r\n");
     for(unsigned i =0; i < 5; i++)
         printf("Testing printf... %d\r\n", i);
     debug_main();
@@ -68,4 +71,13 @@ static void zero_bss() {
         *c = 0;
     //why does this not work?
     //memset(&__bss_start, 0, &__bss_end - &__bss_start);
+}
+
+#define WDT_WSPR 0x44E35048
+#define WDT_WWPS 0x44E35034
+#define WWPS_W_PEND_WSPR (1<<4)
+static void disable_watchdog() {
+    w32(WDT_WSPR, 0xaaaa);
+    while(r32(WDT_WWPS) & WWPS_W_PEND_WSPR);
+    w32(WDT_WSPR, 0x5555);
 }
