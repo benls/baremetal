@@ -14,10 +14,11 @@ $CC $gcc_flags -c task_switch.s
 $CC $gcc_flags $c_flags -c main.c
 $CC $gcc_flags $c_flags -c uart.c
 $CC $gcc_flags $c_flags -c task.c
+$CC $gcc_flags $c_flags -c timer.c
 $CC $gcc_flags $c_flags -c ./libc-helpers/file.c
 $CC $gcc_flags $c_flags -c ./libc-helpers/sbrk.c
 $CC $gcc_flags $c_flags -c ./debug/debug.c
-$CC $gcc_flags -T start.ld -Wl,-Map=output.map -o start.elf start.o main.o uart.o task_switch.o task.o file.o sbrk.o debug.o
+$CC $gcc_flags -T start.ld -Wl,-Map=output.map -o start.elf start.o main.o uart.o task_switch.o task.o file.o sbrk.o debug.o timer.o
 $OBJCOPY start.elf -O binary start.bin
 #python make_mlo.py
 #./block.sh
