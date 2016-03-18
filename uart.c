@@ -1,5 +1,5 @@
-
 #include "uart.h"
+#include "armv7.h"
 
 #define LSR (5*4)
 #define MDR1 (8*4)
@@ -52,14 +52,24 @@ void uart_init(void)
 
 void uart_putc(char c)
 {
+    u32 flags;
+    //TODO: use real locks
+    flags = disable_irq();
     while ((r32(LSR) & LSR_THRE) == 0);
 
     w16(THR, c);
+    set_cpsr(flags);
 }
 
 char uart_getc(void)
 {
+    char c;
+    u32 flags;
+    //TODO: use real locks
+    flags = disable_irq();
     while (!(r32(LSR) & RXFIFOE));
 
-    return (char)(r16(THR) & 0xff);
+    c = (char)(r16(THR) & 0xff);
+    set_cpsr(flags);
+    return c;
 }

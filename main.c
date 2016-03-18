@@ -2,6 +2,8 @@
 #include "uart.h"
 #include "util.h"
 #include "debug.h"
+#include "armv7.h"
+#include "interrupt.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -25,6 +27,8 @@ static void disable_watchdog(void);
 void __libc_init_array();
 
 int main(void) {
+    void* vbar;
+    u32 cpsr;
     zero_bss();
     disable_watchdog();
     debug("Libc init array\r\n");
@@ -35,6 +39,14 @@ int main(void) {
     debug("First malloc done...\r\n");
     for(unsigned i =0; i < 5; i++)
         printf("Testing printf... %d\r\n", i);
+    cpsr = get_cpsr();
+    printf("CPSR... %08lx\r\n", cpsr);
+    vbar = NULL;
+    vbar = get_vbar();
+    printf("Vbar... %p\r\n", vbar);
+    init_interrupt();
+    vbar = get_vbar();
+    printf("Vbar... %p\r\n", vbar);
     debug_main();
     start_task_a();
     start_task_b();
