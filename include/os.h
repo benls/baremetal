@@ -1,12 +1,23 @@
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef OS_H
+#define OS_H
 
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 #include <types.h>
+#include <stdint.h>
 
 #define COUNT_OF(_Array) (sizeof(_Array) / sizeof(_Array[0]))
+
+
+typedef int8_t s8;
+typedef uint8_t u8;
+typedef int16_t s16;
+typedef uint16_t u16;
+typedef int32_t s32;
+typedef uint32_t u32;
+typedef int64_t s64;
+typedef uint64_t u64;
 
 //TODO: why does linux use inline assembly?
 #define w(a,v) w32(a,v)

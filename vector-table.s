@@ -10,17 +10,28 @@ irq_desired_psr:
 .text
 .balign 64
 vector_table:
-reset:
-b reset
-undef:
-b undef
-svc:
-b svc
-b irq
-fiq:
-b fiq
+/* reset */
+nop
+/* undefined inst */
+nop
+/* SWI */
+nop
+/* prefetch abort */
+nop
+/* data abort */
+nop
+/* reserved */
+nop
+/* irq */
+nop
+/* fiq */
+nop
 
 irq:
+/* debugging corrupts registers... */
+ldr r13, =0x4804C194
+ldr r12, =0x01e00000
+str r12, [r13]
 /* Save LR */
 ldr r13, =irq_desired_pc
 str lr, [r13]

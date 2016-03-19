@@ -24,29 +24,29 @@
 /* am335x addr */
 #define BASE 0x44e09000
 
-#define w32(a,v) (*(volatile unsigned long*)(BASE + (a)) = (v))
-#define r32(a) (*(volatile unsigned long*)(BASE + (a)))
-#define r16(a) (*(volatile unsigned short*)(BASE + (a)))
-#define w16(a,v) (*(volatile unsigned short*)(BASE + (a)) = (v))
+#define uart_w32(a,v) (*(volatile unsigned long*)(BASE + (a)) = (v))
+#define uart_r32(a) (*(volatile unsigned long*)(BASE + (a)))
+#define uart_r16(a) (*(volatile unsigned short*)(BASE + (a)))
+#define uart_w16(a,v) (*(volatile unsigned short*)(BASE + (a)) = (v))
 
 void uart_init(void)
 {
 #if 0
-    if (r32(LSR) & LSR_THRE) {
+    if (uart_r32(LSR) & LSR_THRE) {
         /*set_bgr();*/
-        w32(MDR1, 0);
+        uart_w32(MDR1, 0);
     }
 
-    while (!(r32(LSR) & LSR_TEMT));
+    while (!(uart_r32(LSR) & LSR_TEMT));
 
-    w32(IER, IERVAL);
-    w32(MDR1, 0x7);
-    w32(MCR, MCRVAL);
-    w32(FCR, FCRVAL);
+    uart_w32(IER, IERVAL);
+    uart_w32(MDR1, 0x7);
+    uart_w32(MCR, MCRVAL);
+    uart_w32(FCR, FCRVAL);
 
     /*set_bgr();*/
 
-    w32(MDR1, 0x7);
+    uart_w32(MDR1, 0x7);
 #endif
 }
 
@@ -55,9 +55,9 @@ void uart_putc(char c)
     u32 flags;
     //TODO: use real locks
     flags = disable_irq();
-    while ((r32(LSR) & LSR_THRE) == 0);
+    while ((uart_r32(LSR) & LSR_THRE) == 0);
 
-    w16(THR, c);
+    uart_w16(THR, c);
     set_cpsr(flags);
 }
 
@@ -67,9 +67,9 @@ char uart_getc(void)
     u32 flags;
     //TODO: use real locks
     flags = disable_irq();
-    while (!(r32(LSR) & RXFIFOE));
+    while (!(uart_r32(LSR) & RXFIFOE));
 
-    c = (char)(r16(THR) & 0xff);
+    c = (char)(uart_r16(THR) & 0xff);
     set_cpsr(flags);
     return c;
 }

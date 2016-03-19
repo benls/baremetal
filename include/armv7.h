@@ -1,7 +1,7 @@
 #ifndef ARMV7_H
 #define ARMV7_H
 
-#include "types.h"
+#include "os.h"
 
 #define PSR_I_BIT (1<<7)
 

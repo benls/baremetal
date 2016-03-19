@@ -1,6 +1,6 @@
 #include "task.h"
 #include "uart.h"
-#include "util.h"
+#include "os.h"
 #include "debug.h"
 #include "armv7.h"
 #include "interrupt.h"
@@ -39,14 +39,26 @@ int main(void) {
     debug("First malloc done...\r\n");
     for(unsigned i =0; i < 5; i++)
         printf("Testing printf... %d\r\n", i);
-    cpsr = get_cpsr();
-    printf("CPSR... %08lx\r\n", cpsr);
+    /* GPIO1_21-GPIO1_24 */
+    *((volatile u32*)0x4804C190) = (0xf<<21);
+    printf("Vector table: %p\r\n", (void*)vector_table);
     vbar = NULL;
     vbar = get_vbar();
     printf("Vbar... %p\r\n", vbar);
     init_interrupt();
     vbar = get_vbar();
     printf("Vbar... %p\r\n", vbar);
+    cpsr = get_cpsr();
+    printf("CPSR... %08lx\r\n", cpsr);
+    *((volatile u32*)0x48200090) = (1<<7);
+    printf("Software IRQ set...\r\n");
+    unmask_irq(7);
+    printf("Unmasked irq\r\n");
+    printf("Enabling irqs...\r\n");
+    enable_irq();
+    cpsr = get_cpsr();
+    printf("CPSR... %08lx\r\n", cpsr);
+
     debug_main();
     start_task_a();
     start_task_b();

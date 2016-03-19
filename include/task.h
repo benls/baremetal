@@ -1,7 +1,7 @@
 #ifndef TASK_H
 #define TASK_H
 
-#include "types.h"
+#include "os.h"
 
 struct task {
     u32 sp;

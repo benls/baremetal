@@ -1,7 +1,7 @@
 #include <string.h>
 
 #include "task.h"
-#include "types.h"
+#include "os.h"
 
 /*
 stk 100
