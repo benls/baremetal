@@ -12,7 +12,8 @@
 #define MIR(n) (0x84 + (n)*0x20)
 #define MIR_CLEAR(n) (0x88 + (n)*0x20)
 #define MIR_SET(n) (0x8C + (n)*0x20)
-#define MIR_SET(n) (0x8C + (n)*0x20)
+#define ISR_SET(n) (0x90 + (n)*0x20)
+#define ISR_CLEAR(n) (0x94 + (n)*0x20)
 #define ILR(n) (0x100 + (n)*4)
 
 #define SYSCONFIG_AUTOIDLE 1
@@ -24,10 +25,12 @@
 
 #define N_IRQ 128
 
-static isr_t isr[N_IRQ];
+static isr_t isrs[N_IRQ];
 
 static void ack_irq(void) {
+    static volatile u32 v;
     intc_w(CONTROL, CONTROL_NEWIRQ);
+    v = intc_r(CONTROL);
 }
 
 void mask_irq(uint irq) {
@@ -36,6 +39,18 @@ void mask_irq(uint irq) {
 
 void unmask_irq(uint irq) {
     intc_w(MIR_CLEAR(irq/32), 1<<(irq%32));
+}
+
+void set_active_irq(uint irq) {
+    intc_w(ISR_SET(irq/32), 1<<(irq%32));
+}
+
+void clear_active_irq(uint irq) {
+    intc_w(ISR_CLEAR(irq/32), 1<<(irq%32));
+}
+
+void register_isr(isr_t isr, uint irq) {
+    isrs[irq] = isr;
 }
 
 void intc_am335x_init(void) {
@@ -54,18 +69,13 @@ void intc_am335x_init(void) {
 void irq_handler(void) {
     uint irq;
     uint active;
-    debug("IN IRQ HANDLER!");
+    debug("IN IRQ HANDLER!\r\n");
     irq = intc_r(SIR_IRQ);
     active = irq & SIR_IRQ_ACTIVE;
     /* from linux */
-    if ((irq & SIR_IRQ_SPURIOUS) == SIR_IRQ_SPURIOUS || !isr[active]) {
-        ack_irq();
-        return;
-    }
-    /* call ISR */
-    isr[active](active);
-    /* TODO: ack here? */
-    /* TODO: implement irq return */
-    for(;;);
+    if ((irq & SIR_IRQ_SPURIOUS) != SIR_IRQ_SPURIOUS && isrs[active])
+        isrs[active](active);
+    ack_irq();
+    debug("Acked!\r\n");
 }
 

@@ -1,52 +1,70 @@
 .globl vector_table
 .globl irq_handler
+.globl vector_table_init
 
-.data
-irq_desired_pc:
-.word 0
-irq_desired_psr:
-.word 0
+.section ".bss"
+.balign 64
+irq_stack: .skip 512
 
 .text
 .balign 64
 vector_table:
 /* reset */
-nop
+reset:
+b reset
 /* undefined inst */
-nop
+undef:
+b undef
 /* SWI */
-nop
+swi:
+b swi
 /* prefetch abort */
-nop
+prefetch:
+b prefetch
 /* data abort */
-nop
+dabt:
+b dabt
 /* reserved */
-nop
+reserved:
+b reserved
 /* irq */
-nop
+b irq
 /* fiq */
-nop
+fiq:
+b fiq
 
 irq:
-/* debugging corrupts registers... */
-ldr r13, =0x4804C194
-ldr r12, =0x01e00000
-str r12, [r13]
-/* Save LR */
-ldr r13, =irq_desired_pc
-str lr, [r13]
-/* Save SPSR */
-mrs lr, spsr
-ldr r13, =irq_desired_psr
-str lr, [r13]
-/* Switch to SVC mode */
-mrs lr, cpsr
-bic lr, lr, #0x1f
-orr lr, lr, #0x13
-mrs lr, cpsr
-/* push registers not saved by irq_handler*/
 push {r0-r3,r12,lr}
+/* Switch to SVC mode */
+//TODO: just us a constant
+mrs r0, cpsr
+bic r0, r0, #0x1f
+orr r0, r0, #0x13
+msr cpsr, r0
+/* push registers not saved by irq_handler*/
+push {lr}
 /* TODO: re-align stack on 64b boundary */
-blx irq_handler
-/* TODO... */
+blX irq_handler
+pop {lr}
+//TODO: just us a constant
+mrs r0, cpsr
+bic r0, r0, #0x1f
+orr r0, r0, #0x12
+msr cpsr, r0
+pop {r0-r3,r12,lr}
+subs pc, lr, #4
+
+vector_table_init:
+mrs r0, cpsr
+mov r1, r0
+//TODO: constant
+bic r0, r0, #0x1f
+orr r0, r0, #0x12
+orr r0, r0, #0x1c0
+msr cpsr, r0
+ldr r13, =irq_stack
+add r13, r13, #0x1fc
+msr cpsr, r1
+bx lr
+
 

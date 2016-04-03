@@ -26,6 +26,29 @@ static void disable_watchdog(void);
 
 void __libc_init_array();
 
+#define TEST_IRQ 6
+
+static void clear_irq(uint irq) {
+    static int times;
+    debug("IN clear_irq!\r\n");
+    if (irq != TEST_IRQ) {
+        debug("Unexpected irq!\r\n");
+    }
+    printf("cpsr %08lx\r\n", get_cpsr());
+    printf("software IRQs %d... %08lx\r\n", times, *(volatile u32*)0x48200090);
+    printf("ITR: %08lx\r\n", *(volatile u32*)0x48200080);
+    clear_active_irq(TEST_IRQ);
+    debug("Cleared!\r\n");
+    if (++times > 5) {
+        debug("Masking...\r\n");
+        mask_irq(TEST_IRQ);
+    }
+    if (times > 7) {
+        debug("Spinning...\r\n");
+        for(;;);
+    }
+}
+
 int main(void) {
     void* vbar;
     u32 cpsr;
@@ -50,12 +73,17 @@ int main(void) {
     printf("Vbar... %p\r\n", vbar);
     cpsr = get_cpsr();
     printf("CPSR... %08lx\r\n", cpsr);
-    *((volatile u32*)0x48200090) = (1<<7);
+    register_isr(clear_irq, TEST_IRQ);
+    printf("Registered ISR...\r\n");
+    printf("ITR: %08lx\r\n", *(volatile u32*)0x48200080);
+    set_active_irq(TEST_IRQ);
     printf("Software IRQ set...\r\n");
-    unmask_irq(7);
+    printf("ITR: %08lx\r\n", *(volatile u32*)0x48200080);
+    unmask_irq(TEST_IRQ);
     printf("Unmasked irq\r\n");
     printf("Enabling irqs...\r\n");
     enable_irq();
+    printf("Returned from ISR!...\r\n");
     cpsr = get_cpsr();
     printf("CPSR... %08lx\r\n", cpsr);
 
