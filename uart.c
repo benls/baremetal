@@ -1,3 +1,4 @@
+#include "os.h"
 #include "uart.h"
 #include "armv7.h"
 
@@ -48,6 +49,12 @@ void uart_init(void)
 
     uart_w32(MDR1, 0x7);
 #endif
+}
+
+void debug(const char* s) {
+    uint l = __builtin_strlen(s);
+    for(uint i = 0; i < l; i++)
+        uart_putc(s[i]);
 }
 
 void uart_putc(char c)

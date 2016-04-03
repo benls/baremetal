@@ -1,7 +1,5 @@
 #include "os.h"
 #include "timer.h"
-//debug
-#include <stdio.h>
 
 /* uboot sets this to 3mhz, could be as high as 24mhz */
 #define HZ (3 * 1000 * 1000)

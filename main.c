@@ -1,14 +1,8 @@
 #include "task.h"
 #include "uart.h"
 #include "os.h"
-#include "debug.h"
 #include "armv7.h"
 #include "interrupt.h"
-
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
 
 extern u32 __bss_start;
 extern u32 __bss_end;
@@ -23,8 +17,6 @@ static void zero_bss(void);
 static void start_task_a(void);
 static void start_task_b(void);
 static void disable_watchdog(void);
-
-void __libc_init_array();
 
 #define TEST_IRQ 6
 
@@ -55,10 +47,7 @@ int main(void) {
     zero_bss();
     disable_watchdog();
     debug("Libc init array\r\n");
-    __libc_init_array();
     debug("Starting main...\r\n");
-    /* glibc calls sbrk with a huge number unless I do this */
-    free(malloc(0));
     debug("First malloc done...\r\n");
     for(unsigned i =0; i < 5; i++)
         printf("Testing printf... %d\r\n", i);
@@ -74,20 +63,19 @@ int main(void) {
     cpsr = get_cpsr();
     printf("CPSR... %08lx\r\n", cpsr);
     register_isr(clear_irq, TEST_IRQ);
-    printf("Registered ISR...\r\n");
+    debug("Registered ISR...\r\n");
     printf("ITR: %08lx\r\n", *(volatile u32*)0x48200080);
     set_active_irq(TEST_IRQ);
     printf("Software IRQ set...\r\n");
     printf("ITR: %08lx\r\n", *(volatile u32*)0x48200080);
     unmask_irq(TEST_IRQ);
-    printf("Unmasked irq\r\n");
-    printf("Enabling irqs...\r\n");
+    debug("Unmasked irq\r\n");
+    debug("Enabling irqs...\r\n");
     enable_irq();
     printf("Returned from ISR!...\r\n");
     cpsr = get_cpsr();
     printf("CPSR... %08lx\r\n", cpsr);
 
-    debug_main();
     start_task_a();
     start_task_b();
     for(;;)
@@ -106,23 +94,20 @@ static void start_task_b(void) {
 
 static void task_a_func(void) {
     for(;;) {
-        printf("a\r\n");
+        debug("a\r\n");
         task_switch();
     }
 }
 
 static void task_b_func(void) {
     for(;;) {
-        printf("b\r\n");
+        debug("b\r\n");
         task_switch();
     }
 }
 
 static void zero_bss() {
-    for(char *c = (char*)&__bss_start; c < (char*)&__bss_end; c++)
-        *c = 0;
-    //why does this not work?
-    //memset(&__bss_start, 0, &__bss_end - &__bss_start);
+    memset(&__bss_start, 0, &__bss_end - &__bss_start);
 }
 
 #define WDT_WSPR 0x44E35048

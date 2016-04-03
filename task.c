@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "task.h"
 #include "os.h"
 

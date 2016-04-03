@@ -28,9 +28,7 @@
 static isr_t isrs[N_IRQ];
 
 static void ack_irq(void) {
-    static volatile u32 v;
     intc_w(CONTROL, CONTROL_NEWIRQ);
-    v = intc_r(CONTROL);
 }
 
 void mask_irq(uint irq) {
