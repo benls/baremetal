@@ -78,8 +78,10 @@ int main(void) {
 
     start_task_a();
     start_task_b();
-    for(;;)
+    for(;;) {
+        debug("Switching tasks\r\n");
         task_switch();
+    }
 }
 
 static void start_task_a(void) {
@@ -93,14 +95,18 @@ static void start_task_b(void) {
 }
 
 static void task_a_func(void) {
-    for(int i; i++;) {
+    debug("in a\r\n");
+    for(int i; ; i++) {
+        debug("aloop\r\n");
         printf("a %d\r\n", i);
         task_switch();
     }
 }
 
 static void task_b_func(void) {
-    for(int i; i++;) {
+    debug("in b\r\n");
+    for(int i; ; i++) {
+        debug("bloop\r\n");
         printf("b %d\r\n", i);
         task_switch();
     }
