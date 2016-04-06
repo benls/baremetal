@@ -1,6 +1,10 @@
 #ifndef OS_H
 #define OS_H
 
+//TODO: move these to a new header file?
+#include "tinyprintf.h"
+extern void debug(const char *s);
+
 #define COUNT_OF(_Array) (sizeof(_Array) / sizeof(_Array[0]))
 
 typedef signed char s8;
@@ -27,14 +31,9 @@ typedef unsigned int size_t;
 #define w8(a,v) ((*(volatile u8*)(a)) = (v))
 #define r8(a) (*(volatile u8*)(a))
 
-extern void debug(const char *s);
-
 /* GCC builtins */
 #define strlen(x) __builtin_strlen(x)
 #define memcpy(x, y, z) __builtin_memcpy((x), (y), (z)) 
 #define memset(x, y, z) __builtin_memset((x), (y), (z)) 
-
-//TODO:
-#define printf(...)
 
 #endif

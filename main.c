@@ -46,9 +46,9 @@ int main(void) {
     u32 cpsr;
     zero_bss();
     disable_watchdog();
+    init_printf(NULL, &uart_putc_tinyprintf);
     debug("Libc init array\r\n");
     debug("Starting main...\r\n");
-    debug("First malloc done...\r\n");
     for(unsigned i =0; i < 5; i++)
         printf("Testing printf... %d\r\n", i);
     /* GPIO1_21-GPIO1_24 */
@@ -93,21 +93,24 @@ static void start_task_b(void) {
 }
 
 static void task_a_func(void) {
-    for(;;) {
-        debug("a\r\n");
+    for(int i; i++;) {
+        printf("a %d\r\n", i);
         task_switch();
     }
 }
 
 static void task_b_func(void) {
-    for(;;) {
-        debug("b\r\n");
+    for(int i; i++;) {
+        printf("b %d\r\n", i);
         task_switch();
     }
 }
 
 static void zero_bss() {
-    memset(&__bss_start, 0, &__bss_end - &__bss_start);
+    for(char *c = (char*)&__bss_start; c < (char*)&__bss_end; c++)
+        *c = 0;
+    //why does this not work?
+    //memset(&__bss_start, 0, &__bss_end - &__bss_start);
 }
 
 #define WDT_WSPR 0x44E35048

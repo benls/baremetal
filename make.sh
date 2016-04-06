@@ -6,9 +6,8 @@ set -v
 PREFIX=arm-none-eabi-
 CC=${PREFIX}gcc
 OBJCOPY=${PREFIX}objcopy
-gcc_flags=" -g -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -nostdinc -march=armv7-a -marm -O0"
-c_flags=" -Wall -Wextra -std=gnu99 -pedantic -fno-strict-aliasing -I./include"
-
+gcc_flags=" -g -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O0"
+c_flags=" -Wall -Wextra -std=gnu99 -pedantic -fno-strict-aliasing -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=0"
 $CC $gcc_flags -c start.s
 $CC $gcc_flags -c task_switch.s
 $CC $gcc_flags -c vector-table.s
@@ -19,7 +18,9 @@ $CC $gcc_flags $c_flags -c timer.c
 $CC $gcc_flags $c_flags -c ./interrupt.c
 $CC $gcc_flags $c_flags -c ./intc_am335x.c
 $CC $gcc_flags $c_flags -c ./oslib.c
-$CC $gcc_flags -T start.ld -lgcc -Wl,-Map=output.map -o start.elf start.o main.o uart.o task_switch.o task.o timer.o vector-table.o interrupt.o intc_am335x.o oslib.o
+$CC $gcc_flags $c_flags -c ./tinyprintf/tinyprintf.c
+#TODO: find libgcc.a
+$CC $gcc_flags -T start.ld -lgcc -Wl,-Map=output.map -o start.elf start.o main.o uart.o task_switch.o task.o timer.o vector-table.o interrupt.o intc_am335x.o oslib.o tinyprintf.o /usr/lib/gcc/arm-none-eabi/5.3.0/libgcc.a
 $OBJCOPY start.elf -O binary start.bin
 #python make_mlo.py
 #./block.sh

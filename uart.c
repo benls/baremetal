@@ -68,6 +68,11 @@ void uart_putc(char c)
     set_cpsr(flags);
 }
 
+void uart_putc_tinyprintf(void* unused, char c) {
+    (void)unused;
+    uart_putc(c);
+}
+
 char uart_getc(void)
 {
     char c;
