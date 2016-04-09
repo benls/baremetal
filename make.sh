@@ -15,12 +15,11 @@ $CC $gcc_flags $c_flags -c main.c
 $CC $gcc_flags $c_flags -c uart.c
 $CC $gcc_flags $c_flags -c task.c
 $CC $gcc_flags $c_flags -c timer.c
-$CC $gcc_flags $c_flags -c ./interrupt.c
 $CC $gcc_flags $c_flags -c ./intc_am335x.c
 $CC $gcc_flags $c_flags -c ./oslib.c
 $CC $gcc_flags $c_flags -c ./tinyprintf/tinyprintf.c
 #TODO: find libgcc.a
-$CC $gcc_flags -T start.ld -lgcc -Wl,-Map=output.map -o start.elf start.o main.o uart.o task_switch.o task.o timer.o vector-table.o interrupt.o intc_am335x.o oslib.o tinyprintf.o /usr/lib/gcc/arm-none-eabi/5.3.0/libgcc.a
+$CC $gcc_flags -T start.ld -lgcc -Wl,-Map=output.map -o start.elf start.o main.o uart.o task_switch.o task.o timer.o vector-table.o intc_am335x.o oslib.o tinyprintf.o /usr/lib/gcc/arm-none-eabi/5.3.0/libgcc.a
 $OBJCOPY start.elf -O binary start.bin
 #python make_mlo.py
 #./block.sh

@@ -6,7 +6,9 @@
 void init_interrupt(void);
 typedef void (*isr_t)(uint irq);
 
-void register_isr(isr_t isr, uint irq);
+#define ISR_FLAG_NOIRQ 1
+
+void register_isr(isr_t isr, uint irq, uint flags);
 
 /* arch specific */
 extern u32 vector_table[5];

@@ -52,7 +52,7 @@ pop {r0-r3,r12}
 rfefd sp!
 
 vector_table_init:
-ldr r1, =0x192
+ldr r1, =0x92
 mrs r0, cpsr
 msr cpsr, r1
 msr cpsr, r0

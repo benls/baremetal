@@ -14,5 +14,8 @@ static inline u32 us_to_clk(u32 us) {
 u32 timer_raw(void);
 void wait_us(u32 us);
 void wait_clk(u32 clk);
+void timer_init(void);
+u64 timer_get_clks(void);
+void timer_sched(u32 clk);
 
 #endif

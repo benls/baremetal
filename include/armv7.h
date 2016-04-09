@@ -8,7 +8,7 @@
 static inline void *get_vbar(void)
 {
 	void *val;
-	asm("mrc p15, 0, %0, c12, c0, 0" : "=r" (val));
+	asm volatile("mrc p15, 0, %0, c12, c0, 0" : "=r" (val));
 	return val;
 }
 
@@ -20,7 +20,7 @@ static inline void set_vbar(void* val)
 
 static inline u32 get_cpsr(void) {
     u32 cpsr;
-    asm("mrs %0, cpsr" : "=r" (cpsr));
+    asm volatile("mrs %0, cpsr" : "=r" (cpsr));
     return cpsr;
 }
 
@@ -43,3 +43,4 @@ static inline u32 enable_irq(void) {
 }
 
 #endif
+

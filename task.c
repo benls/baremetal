@@ -1,5 +1,6 @@
 #include "task.h"
 #include "os.h"
+#include "armv7.h"
 
 /*
 stk 100
@@ -36,7 +37,7 @@ struct task* new_task(struct task *task, void (*func)(void), void* stack) {
     task->next = NULL;
     task->sp = (u32)stack - sizeof(struct cpu_regs);
     regs = (void*)task->sp;
-    //memset(regs, 0, sizeof(*regs));
+    memset(regs, 0, sizeof(*regs));
     regs->lr = (u32)func;
 
     return task;
@@ -44,17 +45,23 @@ struct task* new_task(struct task *task, void (*func)(void), void* stack) {
 
 void task_switch(void) {
     struct task *old;
-
-    /*TODO: solve locking problem*/
+    u32 flags;
+    flags = disable_irq();
     old = current_task;
     current_task = current_task->next;
-    do_task_switch(current_task, old);
+    set_cpsr(flags);
+    if (old != current_task) {
+        do_task_switch(current_task, old);
+    }
 }
 
 void queue_task(struct task *task) {
     struct task *tmp;
+    u32 flags;
+    flags = disable_irq();
     tmp = current_task->next;
     current_task->next = task;
     task->next = tmp;
+    set_cpsr(flags);
 }
 

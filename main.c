@@ -3,6 +3,7 @@
 #include "os.h"
 #include "armv7.h"
 #include "interrupt.h"
+#include "timer.h"
 
 extern u32 __bss_start;
 extern u32 __bss_end;
@@ -58,11 +59,14 @@ int main(void) {
     vbar = NULL;
     vbar = get_vbar();
     printf("Vbar... %p\r\n", vbar);
+    debug("init interrupt\r\n");
     init_interrupt();
     vbar = get_vbar();
     printf("Vbar... %p\r\n", vbar);
-    register_isr(clear_irq, TEST_IRQ);
-    debug("Registered ISR...\r\n");
+    debug("init timer\r\n");
+    timer_init();
+    debug("Registering ISR...\r\n");
+    register_isr(clear_irq, TEST_IRQ, 0);
     printf("ITR: %08lx\r\n", *(volatile u32*)0x48200080);
     set_active_irq(TEST_IRQ);
     printf("Software IRQ set...\r\n");
@@ -75,6 +79,7 @@ int main(void) {
     cpsr = get_cpsr();
     printf("CPSR... %08lx\r\n", cpsr);
 
+    timer_sched(6000000);
     for(;;);   
 
     start_task_a();

@@ -1,5 +1,6 @@
 #include "interrupt.h"
 #include "os.h"
+#include "armv7.h"
 
 #define INTC_BASE 0x48200000
 #define intc_r(a) r((a)+INTC_BASE)
@@ -25,9 +26,20 @@
 
 #define N_IRQ 128
 
-static isr_t isrs[N_IRQ];
+static struct {
+    isr_t isr;
+    uint flags;
+} isrs[N_IRQ];
 
-static void ack_irq(void) {
+extern void vector_table_init(void);
+
+void init_interrupt(void) {
+    vector_table_init();
+    set_vbar(vector_table);
+    intc_am335x_init();
+}
+
+static void ack_irq() {
     intc_w(CONTROL, CONTROL_NEWIRQ);
 }
 
@@ -47,8 +59,9 @@ void clear_active_irq(uint irq) {
     intc_w(ISR_CLEAR(irq/32), 1<<(irq%32));
 }
 
-void register_isr(isr_t isr, uint irq) {
-    isrs[irq] = isr;
+void register_isr(isr_t isr, uint irq, uint flags) {
+    isrs[irq].isr = isr;
+    isrs[irq].flags = flags;
 }
 
 void intc_am335x_init(void) {
@@ -66,14 +79,19 @@ void intc_am335x_init(void) {
 
 void irq_handler(void) {
     uint irq;
-    uint active;
     debug("IN IRQ HANDLER!\r\n");
     irq = intc_r(SIR_IRQ);
-    active = irq & SIR_IRQ_ACTIVE;
-    /* from linux */
-    if ((irq & SIR_IRQ_SPURIOUS) != SIR_IRQ_SPURIOUS && isrs[active])
-        isrs[active](active);
-    ack_irq();
+    if ((irq & SIR_IRQ_SPURIOUS) == SIR_IRQ_SPURIOUS)
+        return;
+    irq &= SIR_IRQ_ACTIVE;
+    mask_irq(irq);
+    ack_irq(irq);
     debug("Acked!\r\n");
+    if (isrs[irq].isr) {
+        if (!(isrs[irq].flags & ISR_FLAG_NOIRQ))
+            enable_irq();
+        isrs[irq].isr(irq);
+    }
+    unmask_irq(irq);
 }
 
