@@ -47,8 +47,9 @@ int main(void) {
     zero_bss();
     disable_watchdog();
     init_printf(NULL, &uart_putc_tinyprintf);
-    debug("Libc init array\r\n");
     debug("Starting main...\r\n");
+    cpsr = get_cpsr();
+    printf("CPSR... %08lx\r\n", cpsr);
     for(unsigned i =0; i < 5; i++)
         printf("Testing printf... %d\r\n", i);
     /* GPIO1_21-GPIO1_24 */
@@ -60,8 +61,6 @@ int main(void) {
     init_interrupt();
     vbar = get_vbar();
     printf("Vbar... %p\r\n", vbar);
-    cpsr = get_cpsr();
-    printf("CPSR... %08lx\r\n", cpsr);
     register_isr(clear_irq, TEST_IRQ);
     debug("Registered ISR...\r\n");
     printf("ITR: %08lx\r\n", *(volatile u32*)0x48200080);
@@ -75,6 +74,8 @@ int main(void) {
     printf("Returned from ISR!...\r\n");
     cpsr = get_cpsr();
     printf("CPSR... %08lx\r\n", cpsr);
+
+    for(;;);   
 
     start_task_a();
     start_task_b();
@@ -96,7 +97,7 @@ static void start_task_b(void) {
 
 static void task_a_func(void) {
     debug("in a\r\n");
-    for(int i; ; i++) {
+    for(int i = 0; ; i++) {
         debug("aloop\r\n");
         printf("a %d\r\n", i);
         task_switch();
@@ -105,7 +106,7 @@ static void task_a_func(void) {
 
 static void task_b_func(void) {
     debug("in b\r\n");
-    for(int i; ; i++) {
+    for(int i = 0; ; i++) {
         debug("bloop\r\n");
         printf("b %d\r\n", i);
         task_switch();
