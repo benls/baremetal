@@ -37,7 +37,6 @@ u64 timer_get_clks(void) {
 static void timer_isr(uint irq) {
     u32 stat;
     (void)irq;
-    debug("IN TIMER ISR\r\n");
     stat = r32(BASE + IRQ_STAT);
     if (stat & OVF_FLAG)
         accum_ticks += 0x100000000ull;
@@ -46,13 +45,8 @@ static void timer_isr(uint irq) {
     }
     w32(BASE + IRQ_STAT, stat);
     last_tick = timer_raw();
-    if (stat & MAT_FLAG) {
-        debug("MATCH!\r\n");
-    }
-    if (stat & OVF_FLAG) {
-        debug("OVERFLOW!\n\n");
-    }
-    timer_sched(6000000);
+    //TODO: do this in match callback
+    timer_sched(300000);
 }
 
 void timer_sched(u32 clk) {

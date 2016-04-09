@@ -1,6 +1,7 @@
 #include "interrupt.h"
 #include "os.h"
 #include "armv7.h"
+#include "task.h"
 
 #define INTC_BASE 0x48200000
 #define intc_r(a) r((a)+INTC_BASE)
@@ -78,20 +79,29 @@ void intc_am335x_init(void) {
 }
 
 void irq_handler(void) {
+    //ugly hack?
+    static volatile uint irq_deep;
+    uint deep;
     uint irq;
-    debug("IN IRQ HANDLER!\r\n");
+    deep = irq_deep++;
     irq = intc_r(SIR_IRQ);
     if ((irq & SIR_IRQ_SPURIOUS) == SIR_IRQ_SPURIOUS)
         return;
     irq &= SIR_IRQ_ACTIVE;
     mask_irq(irq);
     ack_irq(irq);
-    debug("Acked!\r\n");
     if (isrs[irq].isr) {
         if (!(isrs[irq].flags & ISR_FLAG_NOIRQ))
             enable_irq();
         isrs[irq].isr(irq);
     }
     unmask_irq(irq);
+    //ugly hack
+    disable_irq();
+    irq_deep = deep;
+    enable_irq();
+    if (deep == 0) {
+        task_switch();
+    }
 }
 

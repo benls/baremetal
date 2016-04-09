@@ -79,15 +79,10 @@ int main(void) {
     cpsr = get_cpsr();
     printf("CPSR... %08lx\r\n", cpsr);
 
-    timer_sched(6000000);
-    for(;;);   
-
     start_task_a();
     start_task_b();
-    for(;;) {
-        debug("Switching tasks\r\n");
-        task_switch();
-    }
+    timer_sched(6000000);
+    for(;;);   
 }
 
 static void start_task_a(void) {
@@ -103,18 +98,14 @@ static void start_task_b(void) {
 static void task_a_func(void) {
     debug("in a\r\n");
     for(int i = 0; ; i++) {
-        debug("aloop\r\n");
         printf("a %d\r\n", i);
-        task_switch();
     }
 }
 
 static void task_b_func(void) {
     debug("in b\r\n");
     for(int i = 0; ; i++) {
-        debug("bloop\r\n");
         printf("b %d\r\n", i);
-        task_switch();
     }
 }
 
