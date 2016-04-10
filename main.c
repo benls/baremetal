@@ -78,34 +78,39 @@ int main(void) {
     printf("Returned from ISR!...\r\n");
     cpsr = get_cpsr();
     printf("CPSR... %08lx\r\n", cpsr);
-
+    debug("sched init\r\n");
+    init_sched();
+    debug("start tasks\r\n");
     start_task_a();
     start_task_b();
-    timer_sched(6000000);
+    debug("sched_start\r\n");
+    sched_start();
     for(;;);   
 }
 
 static void start_task_a(void) {
-    new_task(&task_a, task_a_func, &task_a_stack[sizeof(task_a_stack) & ~0xF]);
+    debug("init task a\r\n");
+    init_task(&task_a, task_a_func, &task_a_stack[sizeof(task_a_stack) & ~0xF]);
+    debug("schedule task a\r\n");
     queue_task(&task_a);
 }
 
 static void start_task_b(void) {
-    new_task(&task_b, task_b_func, &task_b_stack[sizeof(task_b_stack) & ~0xF]);
+    init_task(&task_b, task_b_func, &task_b_stack[sizeof(task_b_stack) & ~0xF]);
     queue_task(&task_b);
 }
 
 static void task_a_func(void) {
     debug("in a\r\n");
     for(int i = 0; ; i++) {
-        printf("a %d\r\n", i);
+        //printf("a %d\r\n", i);
     }
 }
 
 static void task_b_func(void) {
     debug("in b\r\n");
     for(int i = 0; ; i++) {
-        printf("b %d\r\n", i);
+        //printf("b %d\r\n", i);
     }
 }
 
@@ -124,3 +129,4 @@ static void disable_watchdog() {
     while(r32(WDT_WWPS) & WWPS_W_PEND_WSPR);
     w32(WDT_WSPR, 0x5555);
 }
+

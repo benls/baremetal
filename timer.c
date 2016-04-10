@@ -2,6 +2,7 @@
 #include "timer.h"
 #include "armv7.h"
 #include "interrupt.h"
+#include "task.h"
 
 #define BASE 0x48040000
 #define TCLR 0x38
@@ -45,16 +46,17 @@ static void timer_isr(uint irq) {
     }
     w32(BASE + IRQ_STAT, stat);
     last_tick = timer_raw();
-    //TODO: do this in match callback
-    timer_sched(300000);
+    schedule();
 }
 
 void timer_sched(u32 clk) {
+    /* Could start/stop timer here to be safe */
     w32(BASE + TMAR, timer_raw() + clk);
     w32(BASE + TCLR, r32(BASE + TCLR) | TCLR_CE);
 }
 
 void timer_init(void) {
+    /* Timer is configured by uboot */
     w32(BASE + TCLR, r32(BASE + TCLR) & ~(TCLR_AR | TCLR_CE));
     w32(BASE + IRQ_DISABLE, ~(OVF_FLAG | MAT_FLAG));
     w32(BASE + IRQ_STAT, OVF_FLAG | MAT_FLAG);

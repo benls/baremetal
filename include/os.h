@@ -5,7 +5,13 @@
 #include "tinyprintf.h"
 extern void debug(const char *s);
 
-#define COUNT_OF(_Array) (sizeof(_Array) / sizeof(_Array[0]))
+#define cnt_of(_Array) (sizeof(_Array) / sizeof(_Array[0]))
+
+#define offsetof(type, member)  __builtin_offsetof (type, member)
+
+#define container_of(ptr, type, member) __extension__({ \
+        const typeof( ((type *)0)->member ) *__mptr = (ptr); \
+        (type *)( (char *)__mptr - offsetof(type,member) );})
 
 typedef signed char s8;
 typedef unsigned char u8;

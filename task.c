@@ -27,41 +27,26 @@ struct cpu_regs {
     u32 lr;
 };
 
-static struct task task_zero = { .next = &task_zero };
+struct task* current_task;
+struct task* next_task;
 
-struct task* current_task = &task_zero;
-
-struct task* new_task(struct task *task, void (*func)(void), void* stack) {
+void init_task(struct task *task, void (*func)(void), void* stack) {
     struct cpu_regs *regs;
 
-    task->next = NULL;
+    task->priority = 0;
+    task->q = LIST_INIT(task->q);
     task->sp = (u32)stack - sizeof(struct cpu_regs);
     regs = (void*)task->sp;
     memset(regs, 0, sizeof(*regs));
     regs->lr = (u32)func;
-
-    return task;
 }
 
 void task_switch(void) {
     struct task *old;
-    u32 flags;
-    flags = disable_irq();
-    old = current_task;
-    current_task = current_task->next;
-    set_cpsr(flags);
-    if (old != current_task) {
+    if (next_task != current_task) {
+        old = current_task;
+        current_task = next_task;
         do_task_switch(current_task, old);
     }
-}
-
-void queue_task(struct task *task) {
-    struct task *tmp;
-    u32 flags;
-    flags = disable_irq();
-    tmp = current_task->next;
-    current_task->next = task;
-    task->next = tmp;
-    set_cpsr(flags);
 }
 
