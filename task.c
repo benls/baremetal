@@ -43,10 +43,15 @@ void init_task(struct task *task, void (*func)(void), void* stack) {
 
 void task_switch(void) {
     struct task *old;
+    /* TODO: assert interrupts enabled */
+    /* TODO: assert current/next task runnable */
+    /* disable interrupts. Interrups are reenabled in do_tasks_switch */
+    disable_irq();
     if (next_task != current_task) {
         old = current_task;
         current_task = next_task;
         do_task_switch(current_task, old);
     }
+    enable_irq();
 }
 

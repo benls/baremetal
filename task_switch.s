@@ -10,6 +10,10 @@ do_task_switch:
 
     @ Load new task stack pointer
     ldr sp,[r0]
+
+    @ Reenable interrupts. Matches disable in task_switch
+    cpsie i 
+
     @ Load registers and return
     ldmia sp!,{r4-r11,pc}
 

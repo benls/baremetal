@@ -5,8 +5,8 @@
 #include "interrupt.h"
 #include "timer.h"
 
-extern u32 __bss_start;
-extern u32 __bss_end;
+extern char __bss_start;
+extern char __bss_end;
 
 static u8 task_a_stack[1024] __attribute__((aligned(8)));
 static struct task task_a;
@@ -103,22 +103,21 @@ static void start_task_b(void) {
 static void task_a_func(void) {
     debug("in a\r\n");
     for(int i = 0; ; i++) {
-        //printf("a %d\r\n", i);
+        printf("a %d\r\n", i);
+        sleep_clks(us_to_clk(1000 * 1000));
     }
 }
 
 static void task_b_func(void) {
     debug("in b\r\n");
     for(int i = 0; ; i++) {
-        //printf("b %d\r\n", i);
+        printf("b %d\r\n", i);
+        sleep_clks(us_to_clk(1000 * 1000));
     }
 }
 
 static void zero_bss() {
-    for(char *c = (char*)&__bss_start; c < (char*)&__bss_end; c++)
-        *c = 0;
-    //why does this not work?
-    //memset(&__bss_start, 0, &__bss_end - &__bss_start);
+    memset(&__bss_start, 0, &__bss_end - &__bss_start);
 }
 
 #define WDT_WSPR 0x44E35048

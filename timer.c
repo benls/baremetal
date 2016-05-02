@@ -37,30 +37,34 @@ u64 timer_get_clks(void) {
 
 static void timer_isr(uint irq) {
     u32 stat;
+    u32 raw;
     (void)irq;
     stat = r32(BASE + IRQ_STAT);
-    if (stat & OVF_FLAG)
-        accum_ticks += 0x100000000ull;
-    if (stat & MAT_FLAG) {
+    if (stat & MAT_FLAG)
         w32(BASE + TCLR, r32(BASE + TCLR) & ~TCLR_CE);
-    }
     w32(BASE + IRQ_STAT, stat);
-    last_tick = timer_raw();
-    schedule();
+    raw = timer_raw();
+    accum_ticks += raw - last_tick;
+    last_tick = raw;
+    if (stat & MAT_FLAG)
+        schedule();
 }
 
 void timer_sched(u32 clk) {
-    /* Could start/stop timer here to be safe */
-    w32(BASE + TMAR, timer_raw() + clk);
+    u32 raw;
+    raw = timer_raw();
+    /* TODO: start/stop timer here */
+    w32(BASE + TMAR, raw + clk);
     w32(BASE + TCLR, r32(BASE + TCLR) | TCLR_CE);
+    printf("Current: %lu; Sched: %lu\r\n", raw, raw + clk);
 }
 
 void timer_init(void) {
     /* Timer is configured by uboot */
     w32(BASE + TCLR, r32(BASE + TCLR) & ~(TCLR_AR | TCLR_CE));
-    w32(BASE + IRQ_DISABLE, ~(OVF_FLAG | MAT_FLAG));
+    w32(BASE + IRQ_DISABLE, ~MAT_FLAG);
     w32(BASE + IRQ_STAT, OVF_FLAG | MAT_FLAG);
-    w32(BASE + IRQ_ENABLE, OVF_FLAG | MAT_FLAG);
+    w32(BASE + IRQ_ENABLE, MAT_FLAG);
     register_isr(timer_isr, TIMER_IRQ, ISR_FLAG_NOIRQ);
     unmask_irq(TIMER_IRQ);
 }
