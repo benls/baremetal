@@ -34,9 +34,10 @@ void sleep_clks(u64 clks) {
 u64 wake_sleepers(void) {
     u64 clk;
     struct list *i;
+    struct list *i_tmp;
     struct task *t;
     clk = timer_get_clks();
-    LIST_FOREACH( i, &waitlist ) {
+    LIST_FOREACH_SAFE( i, &waitlist, i_tmp ) {
         t = container_of(i, struct task, q);
         /* remove from wait queue and add to run queue */
         if (clk >= t->wake_clk) {
@@ -48,10 +49,8 @@ u64 wake_sleepers(void) {
     }
     if (!list_empty(&waitlist)) {
         t = container_of(waitlist.next, struct task, q);
-        printf( "Clk: %llu; wake: %llu\r\n", clk, t->wake_clk );
         return t->wake_clk - clk;
     }
-    printf( "Clk: %llu; No waiters\r\n", clk );
     return (u64)~0;
 }
 

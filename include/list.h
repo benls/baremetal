@@ -31,7 +31,11 @@ static inline void list_del(struct list * a) {
 }
 
 #define LIST_FOREACH(i, list) \
-    for ( i = (list)->next; i != (list); i = i->next )
+    for (i = (list)->next; i != (list); i = i->next)
 
+#define LIST_FOREACH_SAFE(i, list, tmp) \
+    for (i = (list)->next, (tmp) = i->next; \
+            i != (list); \
+            i = (tmp), (tmp) = (tmp)->next)
 #endif
 

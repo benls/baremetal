@@ -27,15 +27,10 @@ typedef unsigned int size_t;
 
 #define NULL ((void*)0)
 
-//TODO: why does linux use inline assembly?
-#define w(a,v) w32(a,v)
-#define r(a) r32(a)
-#define w32(a,v) ((*(volatile u32*)(a)) = (v))
+#define always_inline __attribute__((always_inline))
+
+#define w32(a,v) *(volatile u32*)(a) = v
 #define r32(a) (*(volatile u32*)(a))
-#define w16(a,v) ((*(volatile u16*)(a)) = (v))
-#define r16(a) (*(volatile u16*)(a))
-#define w8(a,v) ((*(volatile u8*)(a)) = (v))
-#define r8(a) (*(volatile u8*)(a))
 
 /* GCC builtins */
 #define strlen(x) __builtin_strlen(x)

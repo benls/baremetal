@@ -4,8 +4,8 @@
 #include "task.h"
 
 #define INTC_BASE 0x48200000
-#define intc_r(a) r((a)+INTC_BASE)
-#define intc_w(a,v) w((a)+INTC_BASE,(v))
+#define intc_r(a) r32((a)+INTC_BASE)
+#define intc_w(a,v) w32((a)+INTC_BASE,(v))
 
 #define SYSCONFIG 0x10
 #define SYSSTATUS 0x14
