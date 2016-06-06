@@ -42,6 +42,8 @@ static void clear_irq(uint irq) {
     }
 }
 
+void init_blink(void);
+
 int main(void) {
     void* vbar;
     u32 cpsr;
@@ -53,8 +55,6 @@ int main(void) {
     printf("CPSR... %08lx\r\n", cpsr);
     for(unsigned i =0; i < 5; i++)
         printf("Testing printf... %d\r\n", i);
-    /* GPIO1_21-GPIO1_24 */
-    *((volatile u32*)0x4804C190) = (0xf<<21);
     printf("Vector table: %p\r\n", (void*)vector_table);
     vbar = NULL;
     vbar = get_vbar();
@@ -84,6 +84,7 @@ int main(void) {
     start_task_a();
     start_task_b();
     debug("sched_start\r\n");
+    init_blink();
     sched_start();
     for(;;);   
 }

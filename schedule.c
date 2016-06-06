@@ -48,7 +48,7 @@ void schedule(void) {
         }
     }
 
-    clk = us_to_clk(1000 * 1000);/*TODO: decrease */
+    clk = us_to_clk(10 * 1000);
     if (wake_clk < clk)
         clk = wake_clk;
     /* schedule timer interrupt */
