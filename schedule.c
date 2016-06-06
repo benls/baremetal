@@ -3,27 +3,17 @@
 #include "armv7.h"
 #include "timer.h"
 
-static u64 background_stack[50];
-static void background_func(void) {
-    for(;;);
-}
-static struct task background_task;
-
 static struct list runlists[N_PRIORITY];
 
 void init_sched(void) {
     for(uint i = 0; i < cnt_of(runlists); i++)
         runlists[i] = LIST_INIT(runlists[i]);
-    init_task(&background_task,
-            background_func,
-            &background_stack[cnt_of(background_stack) - 2]);
-    background_task.priority = N_PRIORITY - 1;
-    queue_task(&background_task);
+    init_background();
 }
 
 void sched_start(void) {
     schedule();
-    task_switch();
+    task_switch(); /* never returns */
 }
 
 void schedule(void) {

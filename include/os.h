@@ -28,6 +28,7 @@ typedef unsigned int size_t;
 #define NULL ((void*)0)
 
 #define always_inline __attribute__((always_inline))
+#define align(n) __attribute__((aligned(n)))
 
 #define w32(a,v) *(volatile u32*)(a) = v
 #define r32(a) (*(volatile u32*)(a))
