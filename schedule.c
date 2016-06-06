@@ -51,6 +51,11 @@ void queue_task_locked(struct task *task) {
     list_add(&runlists[task->priority], &task->q);
 }
 
+void dequeue_current_task_locked(void) {
+    current_task->flags &= ~TASK_RUNNABLE;
+    list_del(&current_task->q);
+}
+
 void queue_task(struct task *task) {
     u32 flags;
     flags = disable_irq();

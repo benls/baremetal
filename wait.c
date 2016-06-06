@@ -6,14 +6,21 @@
 /* wait queue sorted by wakeup clock */
 LIST(waitlist);
 
-void waitlist_add(u64 clks) {
+//TODO: spinlock release
+void waitqueue_add(struct list *q, u32 flags) {
+    /* TODO: assert task is runnable */
+    /* remove current task from run queue */
+    dequeue_current_task_locked();
+    list_add(q, &current_task->q);
+    set_cpsr(flags);
+    schedule();
+    task_switch();
+}
+
+void sleep_clks(u64 clks) {
     u32 flags;
     struct list *i;
     flags = disable_irq();
-    /* TODO: assert task is runnable */
-    /* remove current task from run queue */
-    current_task->flags &= ~TASK_RUNNABLE;
-    list_del(&current_task->q);
     /* add to sleepers list */
     /* The +1 is needed so we wait at least this many clocks */
     current_task->wake_clk = timer_get_clks() + clks + 1;
@@ -21,14 +28,7 @@ void waitlist_add(u64 clks) {
         if (container_of(i, struct task, q)->wake_clk > current_task->wake_clk)
             break;
     }
-    list_add(i->prev, &current_task->q);
-    set_cpsr(flags);
-}
-
-void sleep_clks(u64 clks) {
-    waitlist_add(clks);
-    schedule();
-    task_switch();
+    waitqueue_add(i->prev, flags);
 }
 
 u64 wake_sleepers(void) {

@@ -22,8 +22,10 @@ $CC $gcc_flags $c_flags -c ./schedule.c
 $CC $gcc_flags $c_flags -c ./wait.c
 $CC $gcc_flags $c_flags -c ./blink.c
 $CC $gcc_flags $c_flags -c ./background.c
+$CC $gcc_flags $c_flags -c ./sem.c
+$CC $gcc_flags $c_flags -c ./cond.c
 $CC $gcc_flags $c_flags -c ./print-ab.c
 #TODO: find libgcc.a
-$CC $gcc_flags -T start.ld -lgcc -Wl,-Map=output.map -o start.elf start.o main.o uart.o task_switch.o task.o timer.o vector-table.o intc_am335x.o oslib.o tinyprintf.o schedule.o wait.o blink.o background.o print-ab.o /usr/lib/gcc/arm-none-eabi/5.3.0/libgcc.a
+$CC $gcc_flags -T start.ld -lgcc -Wl,-Map=output.map -o start.elf start.o main.o uart.o task_switch.o task.o timer.o vector-table.o intc_am335x.o oslib.o tinyprintf.o schedule.o wait.o blink.o background.o print-ab.o sem.o cond.o /usr/lib/gcc/arm-none-eabi/5.3.0/libgcc.a
 $OBJCOPY start.elf -O binary start.bin
 
