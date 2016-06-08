@@ -23,7 +23,11 @@ void init_os(void) {
     enable_irq(); //needed?
     init_sched();
     init_blink();
-    init_print_ab();
+    //init_print_ab();
+    printf("ttbcr %08lx\r\n", get_ttbcr());
+    printf("ttbr0 %08lx\r\n", get_ttbr0());
+    printf("dacr  %08lx\r\n", get_dacr());
+    printf("sctlr %08lx\r\n", get_sctlr());
     sched_start(); /* Never returns */
 }
 
