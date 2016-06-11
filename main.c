@@ -13,11 +13,14 @@ static void disable_watchdog(void);
 void init_blink(void);
 void init_print_ab(void);
 
+static void print_stuff(void);
+
 void init_os(void) {
     /* zero bss section */
     memset(&__bss_start, 0, &__bss_end - &__bss_start);
     disable_watchdog();
     init_printf(NULL, &uart_putc_tinyprintf);
+    uart_init();
     init_interrupt();
     timer_init();
     enable_irq(); //needed?
@@ -28,6 +31,7 @@ void init_os(void) {
     printf("ttbr0 %08lx\r\n", get_ttbr0());
     printf("dacr  %08lx\r\n", get_dacr());
     printf("sctlr %08lx\r\n", get_sctlr());
+    print_stuff();
     sched_start(); /* Never returns */
 }
 
@@ -40,3 +44,11 @@ static void disable_watchdog() {
     w32(WDT_WSPR, 0x5555);
 }
 
+
+static void print_stuff(void) {
+#define BASE 0x44e09000
+    for(u32 i=4; i <= 0x84; i+=4) {
+        u32 addr = BASE + i;
+        printf("%08lx: %08lx\r\n", addr, r32(addr));
+    }
+}
