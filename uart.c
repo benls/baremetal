@@ -2,12 +2,10 @@
 #include "uart.h"
 #include "armv7.h"
 
-#define LSR (5*4)
+#define LSR 0x14
 #define MDR1 0x20
-#define IER 4
-#define MCR (4*4)
-#define FCR 0x8
-#define THR 0
+#define IER 0x4
+#define THR 0x0
 #define SYSC 0x54
 #define SYSS 0x58
 #define LCR 0xc
@@ -16,8 +14,7 @@
 #define DLH 0x4
 
 #define LSR_THRE 0x20
-#define RXFIFOE (1<<0)
-#define LSR_TEMT 0x40 
+#define LSR_RXFIFOE (1<<0)
 #define SYSC_NO_IDLE (1<<3)
 #define SYSC_SOFTRESET 2
 #define SYSS_RESETDONE 1
@@ -25,24 +22,14 @@
 #define LCR_CHARLEN_8 0x3
 #define EFR_ENHANCED_EN 1
 
-#define IERVAL 0
-#define LCRVAL 3 /* 8 data, 1 stop, no parity */
-#define LCR_BKSE 0x80
-#define MCRVAL ( 1 | 2 ) /* MCR/DTS */
-#define FCRVAL ( 1 | 2 | 4 ) 
-
 #define DIVISOR_115200 26
 
-/*qemu addr
-* #define BASE 0x49020000
-*/
-/* am335x addr */
 #define BASE 0x44e09000
 
-#define uart_w32(a,v) (*(volatile unsigned long*)(BASE + (a)) = (v))
-#define uart_r32(a) (*(volatile unsigned long*)(BASE + (a)))
-#define uart_r16(a) (*(volatile unsigned short*)(BASE + (a)))
-#define uart_w16(a,v) (*(volatile unsigned short*)(BASE + (a)) = (v))
+#define uart_w32(a,v) w32(BASE + (a),v)
+#define uart_r32(a) r32(BASE + (a))
+#define uart_r16(a) r16(BASE + (a))
+#define uart_w16(a,v) w16(BASE + (a), v)
 
 void uart_init(void) {
     /* Soft reset */
@@ -62,13 +49,12 @@ void uart_init(void) {
 }
 
 void debug(const char* s) {
-    uint l = __builtin_strlen(s);
+    uint l = strlen(s);
     for(uint i = 0; i < l; i++)
         uart_putc(s[i]);
 }
 
-void uart_putc(char c)
-{
+void uart_putc(char c) {
     u32 flags;
     //TODO: use real locks
     flags = disable_irq();
@@ -83,13 +69,13 @@ void uart_putc_tinyprintf(void* unused, char c) {
     uart_putc(c);
 }
 
-char uart_getc(void)
-{
+char uart_getc(void) {
+    //TODO: is this broken now?
     char c;
     u32 flags;
     //TODO: use real locks
     flags = disable_irq();
-    while (!(uart_r32(LSR) & RXFIFOE));
+    while (!(uart_r32(LSR) & LSR_RXFIFOE));
 
     c = (char)(uart_r16(THR) & 0xff);
     set_cpsr(flags);

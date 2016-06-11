@@ -32,6 +32,8 @@ typedef unsigned int size_t;
 
 #define w32(a,v) *(volatile u32*)(a) = v
 #define r32(a) (*(volatile u32*)(a))
+#define w16(a,v) *(volatile u16*)(a) = v
+#define r16(a) (*(volatile u16*)(a))
 
 /* GCC builtins */
 #define strlen(x) __builtin_strlen(x)
