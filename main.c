@@ -20,9 +20,9 @@ void init_os(void) {
     memset(&__bss_start, 0, &__bss_end - &__bss_start);
     disable_watchdog();
     init_printf(NULL, &uart_putc_tinyprintf);
-    uart_init();
     init_interrupt();
     timer_init();
+    uart_init();
     enable_irq(); //needed?
     init_sched();
     init_blink();
@@ -44,7 +44,6 @@ static void disable_watchdog() {
     w32(WDT_WSPR, 0x5555);
 }
 
-
 static void print_stuff(void) {
 #define BASE 0x44e09000
     for(u32 i=4; i <= 0x84; i+=4) {
@@ -52,3 +51,4 @@ static void print_stuff(void) {
         printf("%08lx: %08lx\r\n", addr, r32(addr));
     }
 }
+
