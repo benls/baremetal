@@ -51,4 +51,3 @@ static void print_stuff(void) {
         printf("%08lx: %08lx\r\n", addr, r32(addr));
     }
 }
-

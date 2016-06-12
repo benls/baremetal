@@ -62,6 +62,17 @@
 static const char * volatile tx_buf;
 static volatile u32 tx_len;
 
+static inline void do_tx_isr(void) {
+    if (tx_len > 0) {
+        uart_w16(THR, *tx_buf++);
+        tx_len--;
+    }
+    if (tx_len == 0) {
+        uart_w32(IER, uart_r32(IER) & ~IER_THR);
+        tx_buf = NULL;
+    }
+}
+
 static void isr(uint irq) {
     (void)irq;
     u32 iir;
@@ -70,14 +81,7 @@ static void isr(uint irq) {
     if (!(iir & IIR_IT_PENDING)) {
         type = iir & IIR_IT_TYPE_MASK;
         if (type == IIR_IT_TYPE_THR) {
-            if (tx_len > 0) {
-                uart_w16(THR, *tx_buf++);
-                tx_len--;
-            }
-            if (tx_len == 0) {
-                uart_w32(IER, uart_r32(IER) & ~IER_THR);
-                tx_buf = NULL;
-            }
+            do_tx_isr();
         }
     }
 }
@@ -105,7 +109,6 @@ void uart_init(void) {
     uart_w32(DLH, 0);
     /* Switch to operational mode */
     uart_w32(LCR, LCR_CHARLEN_8);
-    //uart_w32(IER, IER_THR/* | IER_RHR*/);
     /* Enable uart mode */
     uart_w32(MDR1, 0);
 
