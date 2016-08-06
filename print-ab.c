@@ -11,7 +11,6 @@ static void print_func() {
     static const char msg[] = "hello!\r\n";
     for (;;) {
         uart_write(msg, sizeof(msg) - 1, 0);
-        sleep_clks(100 * 3 * 1000);
     }
 }
 

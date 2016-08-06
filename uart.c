@@ -3,6 +3,7 @@
 #include "armv7.h"
 #include "interrupt.h"
 #include "task.h"
+#include "io.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-function"
@@ -32,7 +33,37 @@ static uint buffer_remove_atomic(struct buffer* b, void *data, uint sz);
 static uint buffer_insert_atomic(struct buffer* b, const void *data, uint sz);
 
 int uart_write(const void *data, uint sz, uint flags) {
-    return 0;
+    int err;
+    u8 *out;
+    u32 cpu_flags;
+    uint nwrite;
+    uint last_written;
+    out = data;
+    nwrite = 0;
+    if (!sz)
+        return 0;
+    err = sem_aq(&b.write_sem,
+            (flags & UART_NONBLOCK) ? SEM_NONBLOCK : 0);
+    if (err)
+        return -1;
+    for(;;) {
+        cpu_flags = cs_smp_aq(&b.spinlock);
+        last_written = buffer_insert_atomic(&b, out, sz);
+        out += last_written;
+        sz -= last_written;
+        nwrite += last_written;
+        if (sz && !(flags & UART_NONBLOCK)) {
+            b.write_req = sz > sizeof(b.write_buf) ? sizeof(b.write_buf) : sz;
+            printf("cond\r\n");
+            cond_wait(&b.write_cond, &b.spinlock, cpu_flags);
+            printf("cond ret\r\n");
+        } else {
+            cs_smp_rel(&b.spinlock, cpu_flags);
+            break;
+        }
+    }
+    sem_rel(&b.write_sem);
+    return (int)nwrite;
 }
 
 int uart_read(void *data, uint sz, uint flags) {
@@ -224,15 +255,13 @@ void debug(const char* s) {
 }
 
 void uart_putc(char c) {
+#define LSR_THRE 0x20
     //debugging...
     u32 flags;
-    while(b.write_buf_cnt);
     flags = disable_irq();
-    b.write_buf[0] = c;
-    b.write_buf_cnt = 1;
-    uart_w32(IER, uart_r32(IER) | IER_THR);
+    while ((uart_r32(LSR) & LSR_THRE) == 0);
+    uart_w16(THR, c);
     set_cpsr(flags);
-    while(b.write_buf_cnt);
 }
 
 void uart_putc_tinyprintf(void* unused, char c) {

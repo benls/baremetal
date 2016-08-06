@@ -2,6 +2,7 @@
 #include "armv7.h"
 #include "list.h"
 #include "timer.h"
+#include "io.h"
 
 /* wait queue sorted by wakeup clock */
 LIST(waitlist);
@@ -52,7 +53,9 @@ void sleep_clks(u64 clks) {
     }
     dequeue_current_task_locked();
     list_add(i->prev, &current_task->q);
+    schedule_locked();
     rel_runqueue(cpu_flags);
+    task_switch();
 }
 
 u64 wake_sleepers(void) {

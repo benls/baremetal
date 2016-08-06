@@ -1,5 +1,6 @@
 #include "task.h"
 #include "os.h"
+#include "io.h"
 
 static struct task blink_task;
 static align(8) u8 stack[256];
