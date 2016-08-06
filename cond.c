@@ -1,8 +1,12 @@
 #include "task.h"
 #include "armv7.h"
+#include "io.h"
 
 void cond_wait(struct cond* cond, struct cs_smp_lock *lock, u32 cpu_flags) {
     u32 cpu_flags_rq;
+    if(cond->task) {
+        printf("TASK ALREADY WAITING!!!\r\n");
+    }
     cpu_flags_rq = lock_runqueue();
     dequeue_current_task_locked();
     cond->task = current_task;
@@ -17,6 +21,7 @@ void cond_signal(struct cond* cond) {
     if (cond->task) {
         cpu_flags = lock_runqueue();
         queue_task_locked(cond->task);
+        schedule_locked();
         rel_runqueue(cpu_flags);
         cond->task = NULL;
     }

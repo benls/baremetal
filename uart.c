@@ -54,9 +54,7 @@ int uart_write(const void *data, uint sz, uint flags) {
         nwrite += last_written;
         if (sz && !(flags & UART_NONBLOCK)) {
             b.write_req = sz > sizeof(b.write_buf) ? sizeof(b.write_buf) : sz;
-            printf("cond\r\n");
             cond_wait(&b.write_cond, &b.spinlock, cpu_flags);
-            printf("cond ret\r\n");
         } else {
             cs_smp_rel(&b.spinlock, cpu_flags);
             break;
