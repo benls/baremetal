@@ -7,7 +7,7 @@ PREFIX=arm-none-eabi-
 CC=${PREFIX}gcc
 OBJCOPY=${PREFIX}objcopy
 gcc_flags=" -g -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3"
-c_flags=" -Wall -Wextra -std=gnu99 -pedantic -fno-strict-aliasing -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=0"
+c_flags=" -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1"
 $CC $gcc_flags -c start.s
 $CC $gcc_flags -c task_switch.s
 $CC $gcc_flags -c vector-table.s

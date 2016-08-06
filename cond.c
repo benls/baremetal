@@ -1,24 +1,24 @@
 #include "task.h"
 #include "armv7.h"
 
-void cond_wait(struct cond* cond) {
-    //TODO: assert cond task == NULL
-    u32 flags;
-    flags = disable_irq();
+void cond_wait(struct cond* cond, struct cs_smp_lock *lock, u32 cpu_flags) {
+    u32 cpu_flags_rq;
+    cpu_flags_rq = lock_runqueue();
     dequeue_current_task_locked();
     cond->task = current_task;
-    set_cpsr(flags);
-    schedule();
+    cs_smp_rel(lock, cpu_flags_rq);
+    schedule_locked();
+    rel_runqueue(cpu_flags);
     task_switch();
 }
 
 void cond_signal(struct cond* cond) {
-    u32 flags;
-    flags = disable_irq();
+    u32 cpu_flags;
     if (cond->task) {
+        cpu_flags = lock_runqueue();
         queue_task_locked(cond->task);
+        rel_runqueue(cpu_flags);
         cond->task = NULL;
     }
-    set_cpsr(flags);
 }
 

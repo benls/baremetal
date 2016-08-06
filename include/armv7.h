@@ -81,5 +81,28 @@ static inline void set_sctlr(u32 val) {
 	asm volatile("mcr p15, 0, %0, c1, c0, 0" : : "r" (val));
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+struct cs_smp_lock {
+    //TODO: SMP
+};
+#pragma GCC diagnostic pop
+
+static inline u32 cs_smp_aq(struct cs_smp_lock *lock) {
+    //TODO: SMP
+    (void)lock;
+    return disable_irq();
+}
+
+static inline void cs_smp_rel(struct cs_smp_lock *lock, u32 cpu_flags) {
+    //TODO: SMP
+    (void)lock;
+    set_cpsr(cpu_flags);
+}
+
+static inline void cs_smp_init(struct cs_smp_lock *lock){
+    (void)lock;
+}
+
 #endif
 

@@ -16,11 +16,9 @@ void sched_start(void) {
     task_switch(); /* never returns */
 }
 
-void schedule(void) {
-    u32 flags;
+void schedule_locked(void) {
     u64 clk;
     u64 wake_clk;
-    flags = disable_irq();
     /* current task goes to the back of its priority list */
     if (current_task && (current_task->flags & TASK_RUNNABLE)) {
         list_del(&current_task->q);
@@ -43,7 +41,13 @@ void schedule(void) {
         clk = wake_clk;
     /* schedule timer interrupt */
     timer_sched(clk); 
-    set_cpsr(flags);
+}
+
+void schedule(void) {
+    u32 cpu_flags;
+    cpu_flags = lock_runqueue();
+    schedule_locked();
+    rel_runqueue(cpu_flags);
 }
 
 void queue_task_locked(struct task *task) {

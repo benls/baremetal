@@ -1,6 +1,7 @@
 #include "task.h"
 #include "uart.h"
 #include "os.h"
+#include "io.h"
 #include "armv7.h"
 #include "interrupt.h"
 #include "timer.h"
@@ -13,7 +14,7 @@ static void disable_watchdog(void);
 void init_blink(void);
 void init_print_ab(void);
 
-static void print_stuff(void);
+//static void print_stuff(void);
 
 void init_os(void) {
     /* zero bss section */
@@ -26,12 +27,12 @@ void init_os(void) {
     enable_irq(); //needed?
     init_sched();
     init_blink();
-    //init_print_ab();
+    init_print_ab();
     printf("ttbcr %08lx\r\n", get_ttbcr());
     printf("ttbr0 %08lx\r\n", get_ttbr0());
     printf("dacr  %08lx\r\n", get_dacr());
     printf("sctlr %08lx\r\n", get_sctlr());
-    print_stuff();
+   // print_stuff();
     sched_start(); /* Never returns */
 }
 
@@ -44,10 +45,10 @@ static void disable_watchdog() {
     w32(WDT_WSPR, 0x5555);
 }
 
-static void print_stuff(void) {
-#define BASE 0x44e09000
-    for(u32 i=4; i <= 0x84; i+=4) {
-        u32 addr = BASE + i;
-        printf("%08lx: %08lx\r\n", addr, r32(addr));
-    }
-}
+//static void print_stuff(void) {
+//#define BASE 0x44e09000
+//    for(u32 i=4; i <= 0x84; i+=4) {
+//        u32 addr = BASE + i;
+//        printf("%08lx: %08lx\r\n", addr, r32(addr));
+//    }
+//}

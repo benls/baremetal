@@ -2,34 +2,36 @@
 #include "task.h"
 
 void sem_init(struct sem* sem) {
+    cs_smp_init(&sem->lock);
     sem->count = 0;
     sem->list = LIST_INIT(sem->list);
 }
 
-void sem_aq(struct sem* sem) {
-    u32 flags;
-    flags = disable_irq();
+int sem_aq(struct sem* sem, u32 flags) {
+    u32 cpu_flags;
+    cpu_flags = cs_smp_aq(&sem->lock);
     if (sem->count == 0) {
         sem->count++;
-        set_cpsr(flags);
+        cs_smp_rel(&sem->lock, cpu_flags);
+        return 0;
+    } else if (!(flags & SEM_NONBLOCK)) {
+        waitqueue_add_release(sem->list.prev, &sem->lock, cpu_flags);
+        return 0;
     } else {
-        waitqueue_add(sem->list.prev, flags);
+        cs_smp_rel(&sem->lock, cpu_flags);
+        return -1;
     }
 }
 
 void sem_rel(struct sem* sem) {
-    u32 flags;
-    struct task *t;
-    flags = disable_irq();
+    u32 cpu_flags;
+    cpu_flags = cs_smp_aq(&sem->lock);
+    assert(sem->count == 1);
     sem->count--;
     if (!list_empty(&sem->list)) {
-        //TODO: assert count > 0
-        t = container_of(sem->list.next, struct task, q);
-        list_del(&t->q);
-        //TODO: lock task
-        queue_task_locked(t);
-        //TODO: schedule
+        waitqueue_del_release(sem->list.next, &sem->lock, cpu_flags);
+    } else {
+        cs_smp_rel(&sem->lock, cpu_flags);
     }
-    set_cpsr(flags);
 }
 

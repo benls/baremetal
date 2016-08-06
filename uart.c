@@ -2,6 +2,83 @@
 #include "uart.h"
 #include "armv7.h"
 #include "interrupt.h"
+#include "task.h"
+
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-function"
+#pragma GCC diagnostic ignored "-Wdiscarded-qualifiers"
+
+
+#define BUF_SZ 1024
+//TODO: Move omap uart to a seperate file
+struct buffer {
+    struct cs_smp_lock spinlock;
+    //debugging
+    volatile u8 read_buf[BUF_SZ];
+    volatile u8 write_buf[BUF_SZ];
+    volatile uint read_buf_cnt;
+    volatile uint write_buf_cnt;
+    struct sem read_sem;
+    struct sem write_sem;
+    struct cond read_cond;
+    struct cond write_cond;
+    uint read_req;
+    uint write_req;
+};
+
+static struct buffer b;
+
+static uint buffer_remove_atomic(struct buffer* b, void *data, uint sz);
+static uint buffer_insert_atomic(struct buffer* b, const void *data, uint sz);
+
+int uart_write(const void *data, uint sz, uint flags) {
+    return 0;
+}
+
+int uart_read(void *data, uint sz, uint flags) {
+    int err;
+    u8 *out;
+    u32 cpu_flags;
+    uint nread;
+    uint last_nread;
+    out = data;
+    nread = 0;
+    if (!sz)
+        return 0;
+    err = sem_aq(&b.read_sem,
+            (flags & UART_NONBLOCK) ? SEM_NONBLOCK : 0);
+    if (err)
+        return -1;
+    for(;;) {
+        cpu_flags = cs_smp_aq(&b.spinlock);
+        last_nread = buffer_remove_atomic(&b, out, sz);
+        out += last_nread;
+        sz -= last_nread;
+        nread += last_nread;
+        if (sz && !(flags & UART_NONBLOCK)) {
+            b.read_req = sz > sizeof(b.read_buf) ? sizeof(b.read_buf) : sz;
+            cond_wait(&b.read_cond, &b.spinlock, cpu_flags);
+        } else {
+            cs_smp_rel(&b.spinlock, cpu_flags);
+            break;
+        }
+    }
+    sem_rel(&b.read_sem);
+    return (int)nread;
+}
+
+
+static void omap_uart_init();
+
+void uart_init(void) {
+memset(&b, 0, sizeof(b));
+b.read_buf_cnt = 0;
+b.write_buf_cnt = 0;
+cs_smp_init(&b.spinlock);
+sem_init(&b.read_sem);
+sem_init(&b.write_sem);
+omap_uart_init();
+}
 
 #define LSR 0x14
 #define MDR1 0x20
@@ -58,18 +135,39 @@
 #define RX_TRIG 1
 #define TX_TRIG 30
 
-//debugging...
-static const char * volatile tx_buf;
-static volatile u32 tx_len;
+static uint buffer_remove_atomic(struct buffer* b, void *data, uint sz){
+    sz = sz > b->read_buf_cnt ? b->read_buf_cnt : sz;
+    if (!sz)
+        return 0;
+    memcpy(data, b->read_buf, sz);
+    memmove(b->read_buf, &b->read_buf[sz], b->read_buf_cnt - sz);
+    b->read_buf_cnt -= sz;
+    return sz;
+}
+
+static uint buffer_insert_atomic(struct buffer* b, const void *data, uint sz) {
+    u32 write_avail;
+    write_avail = sizeof(b->write_buf) - b->write_buf_cnt;
+    sz = sz > write_avail ? write_avail : sz;
+    if (!sz)
+        return 0;
+    memcpy(&b->write_buf[b->write_buf_cnt], data, sz);
+    uart_w32(IER, uart_r32(IER) | IER_THR);
+    b->write_buf_cnt += sz;
+    return sz;
+}
 
 static inline void do_tx_isr(void) {
-    if (tx_len > 0) {
-        uart_w16(THR, *tx_buf++);
-        tx_len--;
+    if (b.write_buf_cnt > 0) {
+        uart_w16(THR, b.write_buf[0]);
+        b.write_buf_cnt--;
+        memmove(&b.write_buf[0], &b.write_buf[1], b.write_buf_cnt);
     }
-    if (tx_len == 0) {
+    if (b.write_buf_cnt == 0) {
         uart_w32(IER, uart_r32(IER) & ~IER_THR);
-        tx_buf = NULL;
+    }
+    if (b.write_req && sizeof(b.write_buf) - b.write_buf_cnt >= b.write_req) {
+        cond_signal(&b.write_cond);
     }
 }
 
@@ -86,7 +184,7 @@ static void isr(uint irq) {
     }
 }
 
-void uart_init(void) {
+static void omap_uart_init(void) {
     /* Soft reset */
     uart_w32(SYSC, SYSC_NO_IDLE | SYSC_SOFTRESET);
     while(!(uart_r32(SYSS) & SYSS_RESETDONE));
@@ -112,6 +210,9 @@ void uart_init(void) {
     /* Enable uart mode */
     uart_w32(MDR1, 0);
 
+    // debugging
+    uart_w32(IER, 0);
+
     register_isr(isr, IRQ, ISR_FLAG_NOIRQ);
     unmask_irq(IRQ);
 }
@@ -125,13 +226,13 @@ void debug(const char* s) {
 void uart_putc(char c) {
     //debugging...
     u32 flags;
-    while(tx_len != 0 && tx_buf != NULL);
-    tx_buf = &c;
-    tx_len = 1;
+    while(b.write_buf_cnt);
     flags = disable_irq();
+    b.write_buf[0] = c;
+    b.write_buf_cnt = 1;
     uart_w32(IER, uart_r32(IER) | IER_THR);
     set_cpsr(flags);
-    while(tx_len != 0 && tx_buf != NULL);
+    while(b.write_buf_cnt);
 }
 
 void uart_putc_tinyprintf(void* unused, char c) {

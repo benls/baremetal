@@ -1,10 +1,6 @@
 #ifndef OS_H
 #define OS_H
 
-//TODO: move these to a new header file?
-#include "tinyprintf.h"
-extern void debug(const char *s);
-
 #define cnt_of(_Array) (sizeof(_Array) / sizeof(_Array[0]))
 
 #define offsetof(type, member)  __builtin_offsetof (type, member)
@@ -27,6 +23,8 @@ typedef unsigned int size_t;
 
 #define NULL ((void*)0)
 
+#define assert(x)
+
 #define always_inline __attribute__((always_inline))
 #define align(n) __attribute__((aligned(n)))
 
@@ -39,5 +37,6 @@ typedef unsigned int size_t;
 #define strlen(x) __builtin_strlen(x)
 #define memcpy(x, y, z) __builtin_memcpy((x), (y), (z)) 
 #define memset(x, y, z) __builtin_memset((x), (y), (z)) 
+#define memmove(x, y, z) __builtin_memmove((x), (y), (z)) 
 
 #endif
