@@ -6,7 +6,8 @@ set -v
 PREFIX=arm-none-eabi-
 CC=${PREFIX}gcc
 OBJCOPY=${PREFIX}objcopy
-gcc_flags=" -g -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3"
+libgcc_path=$($CC -print-libgcc-file-name)
+gcc_flags=" -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3"
 c_flags=" -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0"
 $CC $gcc_flags -c start.s
 $CC $gcc_flags -c task_switch.s
@@ -26,7 +27,6 @@ $CC $gcc_flags $c_flags -c ./sem.c
 $CC $gcc_flags $c_flags -c ./cond.c
 $CC $gcc_flags $c_flags -c ./print-ab.c
 $CC $gcc_flags $c_flags -c ./printf.c
-#TODO: find libgcc.a
-$CC $gcc_flags -T start.ld -lgcc -Wl,-Map=output.map -o start.elf start.o main.o uart.o task_switch.o task.o timer.o vector-table.o intc_am335x.o oslib.o tinyprintf.o schedule.o wait.o blink.o background.o print-ab.o sem.o cond.o printf.o /usr/lib/gcc/arm-none-eabi/5.3.0/libgcc.a
+$CC $gcc_flags -T start.ld -lgcc -Wl,-Map=output.map -o start.elf start.o main.o uart.o task_switch.o task.o timer.o vector-table.o intc_am335x.o oslib.o tinyprintf.o schedule.o wait.o blink.o background.o print-ab.o sem.o cond.o printf.o $libgcc_path
 $OBJCOPY start.elf -O binary start.bin
 
