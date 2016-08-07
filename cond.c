@@ -1,6 +1,6 @@
 #include "task.h"
 #include "armv7.h"
-#include "io.h"
+#include "printf.h"
 
 void cond_wait(struct cond* cond, struct cs_smp_lock *lock, u32 cpu_flags) {
     u32 cpu_flags_rq;

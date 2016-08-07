@@ -2,7 +2,6 @@
 #include "armv7.h"
 #include "list.h"
 #include "timer.h"
-#include "io.h"
 
 /* wait queue sorted by wakeup clock */
 LIST(waitlist);

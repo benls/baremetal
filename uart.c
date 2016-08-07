@@ -3,7 +3,6 @@
 #include "armv7.h"
 #include "interrupt.h"
 #include "task.h"
-#include "io.h"
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-function"
@@ -14,7 +13,6 @@
 //TODO: Move omap uart to a seperate file
 struct buffer {
     struct cs_smp_lock spinlock;
-    //debugging
     volatile u8 read_buf[BUF_SZ];
     volatile u8 write_buf[BUF_SZ];
     volatile uint read_buf_cnt;
@@ -201,14 +199,6 @@ static uint buffer_insert_atomic(struct buffer* b, const void *data, uint sz) {
 static inline void tx_isr(void) {
     uint i;
     uint sz;
-    uint txfifo_lvl;
-    uint txfifo_avail;
-    txfifo_lvl = uart_r16(TXFIFO_LVL) & 0xff;
-    txfifo_avail = txfifo_lvl > 64 ? 0 : 64 - txfifo_lvl;
-    if (txfifo_avail < TX_SZ) {
-        printf("BAD TX FIFO level: %u\r\n", txfifo_lvl);
-        while(1);
-    }
     sz = b.write_buf_cnt > TX_SZ ? TX_SZ : b.write_buf_cnt;
     for (i = 0; i < sz; i++) {
         uart_w16(THR, b.write_buf[i]);
@@ -261,7 +251,7 @@ static void isr(uint irq) {
             else if (type == IIR_IT_TYPE_RHR)
                 rx_isr();
             else
-                printf("Unexpected uart type: %lu\r\n", type);
+               break;
         }
     }
 }
@@ -297,38 +287,12 @@ static void omap_uart_init(void) {
     unmask_irq(IRQ);
 }
 
-void debug(const char* s) {
-    uint l = strlen(s);
-    for(uint i = 0; i < l; i++)
-        uart_putc(s[i]);
-}
-
 void uart_putc(char c) {
-    //debugging...
     u32 flags;
     flags = disable_irq();
     while ((uart_r16(LSR) & LSR_TXSRE) == 0);
     uart_w16(THR, c);
     while ((uart_r16(LSR) & LSR_TXSRE) == 0);
-    while ((uart_r16(TXFIFO_LVL) & 0xff) != 0);
     set_cpsr(flags);
-}
-
-void uart_putc_tinyprintf(void* unused, char c) {
-    (void)unused;
-    uart_putc(c);
-}
-
-char uart_getc(void) {
-    //TODO: is this broken now?
-    char c;
-    u32 flags;
-    //TODO: use real locks
-    flags = disable_irq();
-    while (!(uart_r16(LSR) & LSR_RXFIFOE));
-
-    c = (char)(uart_r16(THR) & 0xff);
-    set_cpsr(flags);
-    return c;
 }
 

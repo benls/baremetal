@@ -1,9 +1,10 @@
 #include "task.h"
 #include "os.h"
-#include "io.h"
+#include "printf.h"
+#include "armv7.h"
 
 static struct task blink_task;
-static align(8) u8 stack[256];
+static align(8) u8 stack[4096];
 
 static void blink(void) {
     w32(0x4804C190, 0xf<<21);
