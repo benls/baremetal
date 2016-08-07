@@ -163,6 +163,8 @@ omap_uart_init();
 
 #define RX_TRIG 1
 #define TX_TRIG 30
+#define TX_FIFO_SZ 64
+#define TX_FIFO_MIN_CAPACITY (1)
 
 static uint buffer_remove_atomic(struct buffer* b, void *data, uint sz){
     sz = sz > b->read_buf_cnt ? b->read_buf_cnt : sz;
@@ -187,11 +189,19 @@ static uint buffer_insert_atomic(struct buffer* b, const void *data, uint sz) {
 }
 
 static inline void do_tx_isr(void) {
-    if (b.write_buf_cnt > 0) {
-        uart_w16(THR, b.write_buf[0]);
-        b.write_buf_cnt--;
-        memmove(&b.write_buf[0], &b.write_buf[1], b.write_buf_cnt);
+    uint i;
+    uint sz;
+    sz = b.write_buf_cnt > TX_FIFO_MIN_CAPACITY ? TX_FIFO_MIN_CAPACITY : b.write_buf_cnt;
+    for (i = 0; i < sz; i++) {
+        uart_w16(THR, "abcdefghijklmnopqrstuvwyxz"[sz-i]);
+        {
+        volatile uint x;
+        x = uart_r16(LSR);
+        }
+        uart_w16(THR, b.write_buf[i]);
     }
+    b.write_buf_cnt -= sz;
+    memmove(&b.write_buf[0], &b.write_buf[sz], b.write_buf_cnt);
     if (b.write_buf_cnt == 0) {
         uart_w32(IER, uart_r32(IER) & ~IER_THR);
     }
@@ -204,11 +214,16 @@ static void isr(uint irq) {
     (void)irq;
     u32 iir;
     u32 type;
-    iir = uart_r32(IIR);
-    if (!(iir & IIR_IT_PENDING)) {
-        type = iir & IIR_IT_TYPE_MASK;
-        if (type == IIR_IT_TYPE_THR) {
-            do_tx_isr();
+    for(;;) {
+        iir = uart_r32(IIR);
+        if (iir & IIR_IT_PENDING) {
+            break;
+        } else {
+            type = iir & IIR_IT_TYPE_MASK;
+            if (type == IIR_IT_TYPE_THR)
+                do_tx_isr();
+            else
+                printf("Unexpected uart type: %lu\r\n", type);
         }
     }
 }
@@ -253,12 +268,13 @@ void debug(const char* s) {
 }
 
 void uart_putc(char c) {
-#define LSR_THRE 0x20
+#define LSR_TXSRE (1<<6)
     //debugging...
     u32 flags;
     flags = disable_irq();
-    while ((uart_r32(LSR) & LSR_THRE) == 0);
+    while ((uart_r32(LSR) & LSR_TXSRE) == 0);
     uart_w16(THR, c);
+    while ((uart_r32(LSR) & LSR_TXSRE) == 0);
     set_cpsr(flags);
 }
 
