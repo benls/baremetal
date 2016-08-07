@@ -8,9 +8,14 @@ static struct task print_task;
 static align(8) u8 stack[4096];
 
 static void print_func() {
-    static const char msg[] = "hello!\r\n";
+    int sz;
+    char buf[100];
     for (;;) {
-        uart_write(msg, sizeof(msg) - 1, 0);
+        sleep_clks(1000 * 3 * 1000);
+        sz = uart_read(buf, sizeof(buf), 1);
+        if (sz > 0) {
+            uart_write(buf, sz, sz);
+        }
     }
 }
 

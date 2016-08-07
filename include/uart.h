@@ -1,10 +1,8 @@
 #ifndef UART_H
 #define UART_H
 
-#define UART_NONBLOCK 1
-
-int uart_read(void *data, uint sz, uint flags);
-int uart_write(const void *data, uint sz, uint flags);
+int uart_read(void *data, uint sz, uint need);
+int uart_write(const void *data, uint sz, uint need);
 
 void uart_init(void);
 void uart_putc(char c);

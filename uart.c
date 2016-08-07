@@ -32,28 +32,30 @@ static struct buffer b;
 static uint buffer_remove_atomic(struct buffer* b, void *data, uint sz);
 static uint buffer_insert_atomic(struct buffer* b, const void *data, uint sz);
 
-int uart_write(const void *data, uint sz, uint flags) {
+int uart_write(const void *data, uint sz, uint need) {
     int err;
     u8 *out;
     u32 cpu_flags;
     uint nwrite;
-    uint last_written;
+    uint txed;
     out = data;
     nwrite = 0;
+    if (need > sz)
+        return -1;
     if (!sz)
         return 0;
-    err = sem_aq(&b.write_sem,
-            (flags & UART_NONBLOCK) ? SEM_NONBLOCK : 0);
+    err = sem_aq(&b.write_sem, need ? SEM_NONBLOCK : 0);
     if (err)
         return -1;
     for(;;) {
         cpu_flags = cs_smp_aq(&b.spinlock);
-        last_written = buffer_insert_atomic(&b, out, sz);
-        out += last_written;
-        sz -= last_written;
-        nwrite += last_written;
-        if (sz && !(flags & UART_NONBLOCK)) {
-            b.write_req = sz > sizeof(b.write_buf) ? sizeof(b.write_buf) : sz;
+        txed = buffer_insert_atomic(&b, out, sz);
+        out += txed;
+        sz -= txed;
+        need = txed > need ? 0 : need - txed;
+        nwrite += txed;
+        if (need) {
+            b.write_req = need > sizeof(b.write_buf) ? sizeof(b.write_buf) : need;
             cond_wait(&b.write_cond, &b.spinlock, cpu_flags);
         } else {
             cs_smp_rel(&b.spinlock, cpu_flags);
@@ -64,28 +66,30 @@ int uart_write(const void *data, uint sz, uint flags) {
     return (int)nwrite;
 }
 
-int uart_read(void *data, uint sz, uint flags) {
+int uart_read(void *data, uint sz, uint need) {
     int err;
     u8 *out;
     u32 cpu_flags;
     uint nread;
-    uint last_nread;
+    uint rxed;
     out = data;
     nread = 0;
+    if (need > sz)
+        return -1;
     if (!sz)
         return 0;
-    err = sem_aq(&b.read_sem,
-            (flags & UART_NONBLOCK) ? SEM_NONBLOCK : 0);
+    err = sem_aq(&b.read_sem, need ? SEM_NONBLOCK : 0);
     if (err)
         return -1;
     for(;;) {
         cpu_flags = cs_smp_aq(&b.spinlock);
-        last_nread = buffer_remove_atomic(&b, out, sz);
-        out += last_nread;
-        sz -= last_nread;
-        nread += last_nread;
-        if (sz && !(flags & UART_NONBLOCK)) {
-            b.read_req = sz > sizeof(b.read_buf) ? sizeof(b.read_buf) : sz;
+        rxed = buffer_remove_atomic(&b, out, sz);
+        out += rxed;
+        sz -= rxed;
+        need = rxed > need ? 0 : need - rxed;
+        nread += rxed;
+        if (need) {
+            b.read_req = need > sizeof(b.read_buf) ? sizeof(b.read_buf) : need;
             cond_wait(&b.read_cond, &b.spinlock, cpu_flags);
         } else {
             cs_smp_rel(&b.spinlock, cpu_flags);
@@ -100,41 +104,45 @@ int uart_read(void *data, uint sz, uint flags) {
 static void omap_uart_init();
 
 void uart_init(void) {
-memset(&b, 0, sizeof(b));
-b.read_buf_cnt = 0;
-b.write_buf_cnt = 0;
-cs_smp_init(&b.spinlock);
-sem_init(&b.read_sem);
-sem_init(&b.write_sem);
-omap_uart_init();
+    memset(&b, 0, sizeof(b));
+    b.read_buf_cnt = 0;
+    b.write_buf_cnt = 0;
+    cs_smp_init(&b.spinlock);
+    sem_init(&b.read_sem);
+    sem_init(&b.write_sem);
+    omap_uart_init();
 }
 
-#define LSR 0x14
-#define MDR1 0x20
-#define IER 0x4
 #define THR 0x0
+#define RHR 0x0
+#define DLL 0x0
+#define IER 0x4
+#define DLH 0x4
+#define EFR 0x8
+#define FCR 0x8
+#define IIR 0x8
+#define LCR 0xc
+#define MCR 0x10
+#define LSR 0x14
+#define TLR 0x1c
+#define MDR1 0x20
+#define SCR 0x40
+#define SCR 0x40
 #define SYSC 0x54
 #define SYSS 0x58
-#define LCR 0xc
-#define EFR 0x8
-#define DLL 0x0
-#define DLH 0x4
-#define SCR 0x40
-#define FCR 0x8
-#define MCR 0x10
-#define TLR 0x1c
-#define SCR 0x40
-#define IIR 0x8
+#define RXFIFO_LVL 0x64
+#define TXFIFO_LVL 0x68
 
-#define LSR_TXFIFOE (1<<5)
 #define LSR_RXFIFOE (1<<0)
+#define LSR_TXFIFOE (1<<5)
+#define LSR_TXSRE (1<<6)
 #define SYSC_NO_IDLE (1<<3)
 #define SYSC_SOFTRESET 2
 #define SYSS_RESETDONE 1
 #define LCR_MODE_A 0x80
 #define LCR_MODE_B 0xbf
 #define LCR_CHARLEN_8 0x3
-#define EFR_ENHANCED_EN 1
+#define EFR_ENHANCED_EN (1<<4)
 #define FCR_FIFO_EN (1<<0)
 #define FCR_TX_TRIG_SHIFT 4
 #define FCR_RX_TRIG_SHIFT 6
@@ -156,15 +164,14 @@ omap_uart_init();
 #define BASE 0x44e09000
 #define IRQ 72
 
-#define uart_w32(a,v) w32(BASE + (a),v)
-#define uart_r32(a) r32(BASE + (a))
 #define uart_r16(a) r16(BASE + (a))
 #define uart_w16(a,v) w16(BASE + (a), v)
 
 #define RX_TRIG 1
 #define TX_TRIG 30
 #define TX_FIFO_SZ 64
-#define TX_FIFO_MIN_CAPACITY (1)
+/* TODO: Why does this need the -10 */
+#define TX_SZ (TX_FIFO_SZ - TX_TRIG - 10)
 
 static uint buffer_remove_atomic(struct buffer* b, void *data, uint sz){
     sz = sz > b->read_buf_cnt ? b->read_buf_cnt : sz;
@@ -173,6 +180,9 @@ static uint buffer_remove_atomic(struct buffer* b, void *data, uint sz){
     memcpy(data, b->read_buf, sz);
     memmove(b->read_buf, &b->read_buf[sz], b->read_buf_cnt - sz);
     b->read_buf_cnt -= sz;
+    /* enable RX interrupt */
+    if (b->read_buf_cnt != sizeof(b->read_buf))
+        uart_w16(IER, uart_r16(IER) | IER_RHR);
     return sz;
 }
 
@@ -183,30 +193,56 @@ static uint buffer_insert_atomic(struct buffer* b, const void *data, uint sz) {
     if (!sz)
         return 0;
     memcpy(&b->write_buf[b->write_buf_cnt], data, sz);
-    uart_w32(IER, uart_r32(IER) | IER_THR);
     b->write_buf_cnt += sz;
+    uart_w16(IER, uart_r16(IER) | IER_THR);
     return sz;
 }
 
-static inline void do_tx_isr(void) {
+static inline void tx_isr(void) {
     uint i;
     uint sz;
-    sz = b.write_buf_cnt > TX_FIFO_MIN_CAPACITY ? TX_FIFO_MIN_CAPACITY : b.write_buf_cnt;
+    uint txfifo_lvl;
+    uint txfifo_avail;
+    txfifo_lvl = uart_r16(TXFIFO_LVL) & 0xff;
+    txfifo_avail = txfifo_lvl > 64 ? 0 : 64 - txfifo_lvl;
+    if (txfifo_avail < TX_SZ) {
+        printf("BAD TX FIFO level: %u\r\n", txfifo_lvl);
+        while(1);
+    }
+    sz = b.write_buf_cnt > TX_SZ ? TX_SZ : b.write_buf_cnt;
     for (i = 0; i < sz; i++) {
-        uart_w16(THR, "abcdefghijklmnopqrstuvwyxz"[sz-i]);
-        {
-        volatile uint x;
-        x = uart_r16(LSR);
-        }
         uart_w16(THR, b.write_buf[i]);
     }
     b.write_buf_cnt -= sz;
     memmove(&b.write_buf[0], &b.write_buf[sz], b.write_buf_cnt);
-    if (b.write_buf_cnt == 0) {
-        uart_w32(IER, uart_r32(IER) & ~IER_THR);
-    }
-    if (b.write_req && sizeof(b.write_buf) - b.write_buf_cnt >= b.write_req) {
+
+    /* Disable interrupt when TX buffer is empty */
+    if (b.write_buf_cnt == 0)
+        uart_w16(IER, uart_r16(IER) & ~IER_THR);
+
+    /* Wake writer */
+    if (b.write_req && sizeof(b.write_buf) - b.write_buf_cnt >= b.write_req)
         cond_signal(&b.write_cond);
+}
+
+static inline void rx_isr(void) {
+    uint available;
+    uint rxfifo_lvl;
+    uint sz;
+
+    available = sizeof(b.read_buf) - b.read_buf_cnt;
+    rxfifo_lvl = uart_r16(RXFIFO_LVL) & 0xff;
+    sz = available > rxfifo_lvl ? rxfifo_lvl : available;
+    while (sz--)
+        b.read_buf[b.read_buf_cnt++] = uart_r16(RHR);
+
+    /* Disable interrupt when RX buffer is full */
+    if (b.read_buf_cnt == sizeof(b.read_buf))
+        uart_w16(IER, uart_r16(IER) & ~IER_RHR);
+
+    /* Wake reader */
+    if (b.read_req && b.read_buf_cnt >= b.read_req) {
+        cond_signal(&b.read_cond);
     }
 }
 
@@ -215,13 +251,15 @@ static void isr(uint irq) {
     u32 iir;
     u32 type;
     for(;;) {
-        iir = uart_r32(IIR);
+        iir = uart_r16(IIR);
         if (iir & IIR_IT_PENDING) {
             break;
         } else {
             type = iir & IIR_IT_TYPE_MASK;
             if (type == IIR_IT_TYPE_THR)
-                do_tx_isr();
+                tx_isr();
+            else if (type == IIR_IT_TYPE_RHR)
+                rx_isr();
             else
                 printf("Unexpected uart type: %lu\r\n", type);
         }
@@ -230,32 +268,30 @@ static void isr(uint irq) {
 
 static void omap_uart_init(void) {
     /* Soft reset */
-    uart_w32(SYSC, SYSC_NO_IDLE | SYSC_SOFTRESET);
-    while(!(uart_r32(SYSS) & SYSS_RESETDONE));
-    uart_w32(SYSC, SYSC_NO_IDLE);
+    uart_w16(SYSC, SYSC_NO_IDLE | SYSC_SOFTRESET);
+    while(!(uart_r16(SYSS) & SYSS_RESETDONE));
+    uart_w16(SYSC, SYSC_NO_IDLE);
     /* switch to configuration mode B */
-    uart_w32(LCR, LCR_MODE_B);
-    uart_w32(EFR, EFR_ENHANCED_EN);
+    uart_w16(LCR, LCR_MODE_B);
+    uart_w16(EFR, EFR_ENHANCED_EN);
     /* switch to configuration mode A */
-    uart_w32(LCR, LCR_MODE_A);
+    uart_w16(LCR, LCR_MODE_A);
     /* configure FIFOs */
-    uart_w32(MCR, MCR_TCRTLR);
-    uart_w32(FCR, FCR_FIFO_EN |
+    uart_w16(MCR, MCR_TCRTLR);
+    uart_w16(TLR, ((RX_TRIG >> 2) << TLR_RX_TRIG_SHIFT) |
+                  ((TX_TRIG >> 2) << TLR_TX_TRIG_SHIFT));
+    uart_w16(FCR, FCR_FIFO_EN |
             ((RX_TRIG & 0x3) << FCR_RX_TRIG_SHIFT) |
             ((TX_TRIG & 0x3) << FCR_TX_TRIG_SHIFT));
-    uart_w32(TLR, ((RX_TRIG >> 2) << TLR_RX_TRIG_SHIFT) |
-            ((TX_TRIG >> 2) << TLR_TX_TRIG_SHIFT));
-    uart_w32(SCR, SCR_TX_TRIG_GRANU1 | SCR_RX_TRIG_GRANU1);
+    uart_w16(SCR, SCR_RX_TRIG_GRANU1 | SCR_TX_TRIG_GRANU1);
     /* Set baud rate */
-    uart_w32(DLL, DIVISOR_115200);
-    uart_w32(DLH, 0);
+    uart_w16(DLL, DIVISOR_115200);
+    uart_w16(DLH, 0);
     /* Switch to operational mode */
-    uart_w32(LCR, LCR_CHARLEN_8);
+    uart_w16(LCR, LCR_CHARLEN_8);
     /* Enable uart mode */
-    uart_w32(MDR1, 0);
-
-    // debugging
-    uart_w32(IER, 0);
+    uart_w16(MDR1, 0);
+    uart_w16(IER, IER_RHR);
 
     register_isr(isr, IRQ, ISR_FLAG_NOIRQ);
     unmask_irq(IRQ);
@@ -268,13 +304,13 @@ void debug(const char* s) {
 }
 
 void uart_putc(char c) {
-#define LSR_TXSRE (1<<6)
     //debugging...
     u32 flags;
     flags = disable_irq();
-    while ((uart_r32(LSR) & LSR_TXSRE) == 0);
+    while ((uart_r16(LSR) & LSR_TXSRE) == 0);
     uart_w16(THR, c);
-    while ((uart_r32(LSR) & LSR_TXSRE) == 0);
+    while ((uart_r16(LSR) & LSR_TXSRE) == 0);
+    while ((uart_r16(TXFIFO_LVL) & 0xff) != 0);
     set_cpsr(flags);
 }
 
@@ -289,9 +325,10 @@ char uart_getc(void) {
     u32 flags;
     //TODO: use real locks
     flags = disable_irq();
-    while (!(uart_r32(LSR) & LSR_RXFIFOE));
+    while (!(uart_r16(LSR) & LSR_RXFIFOE));
 
     c = (char)(uart_r16(THR) & 0xff);
     set_cpsr(flags);
     return c;
 }
+
