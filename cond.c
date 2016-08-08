@@ -4,9 +4,6 @@
 
 void cond_wait(struct cond* cond, struct cs_smp_lock *lock, u32 cpu_flags) {
     u32 cpu_flags_rq;
-    if(cond->task) {
-        printf("TASK ALREADY WAITING!!!\r\n");
-    }
     cpu_flags_rq = lock_runqueue();
     dequeue_current_task_locked();
     cond->task = current_task;

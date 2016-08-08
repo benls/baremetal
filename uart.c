@@ -4,19 +4,14 @@
 #include "interrupt.h"
 #include "task.h"
 
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wunused-function"
-#pragma GCC diagnostic ignored "-Wdiscarded-qualifiers"
-
-
 #define BUF_SZ 1024
 //TODO: Move omap uart to a seperate file
 struct buffer {
     struct cs_smp_lock spinlock;
-    volatile u8 read_buf[BUF_SZ];
-    volatile u8 write_buf[BUF_SZ];
-    volatile uint read_buf_cnt;
-    volatile uint write_buf_cnt;
+    u8 read_buf[BUF_SZ];
+    u8 write_buf[BUF_SZ];
+    uint read_buf_cnt;
+    uint write_buf_cnt;
     struct sem read_sem;
     struct sem write_sem;
     struct cond read_cond;
@@ -32,7 +27,7 @@ static uint buffer_insert_atomic(struct buffer* b, const void *data, uint sz);
 
 int uart_write(const void *data, uint sz, uint need) {
     int err;
-    u8 *out;
+    const u8 *out;
     u32 cpu_flags;
     uint nwrite;
     uint txed;
