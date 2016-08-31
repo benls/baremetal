@@ -1,27 +1,25 @@
 #ifndef OS_H
 #define OS_H
 
-#define cnt_of(_Array) (sizeof(_Array) / sizeof(_Array[0]))
+#include <stddef.h>
+#include <stdint.h>
 
-#define offsetof(type, member)  __builtin_offsetof (type, member)
+#define cnt_of(_Array) (sizeof(_Array) / sizeof(_Array[0]))
 
 #define container_of(ptr, type, member) __extension__({ \
         const typeof( ((type *)0)->member ) *__mptr = (ptr); \
         (type *)( (char *)__mptr - offsetof(type,member) );})
 
-typedef signed char s8;
-typedef unsigned char u8;
-typedef short s16;
-typedef unsigned short u16;
-typedef long int s32;
-typedef unsigned long int u32;
-typedef long long int s64;
-typedef unsigned long long int u64;
+typedef int8_t s8;
+typedef uint8_t u8;
+typedef int16_t s16;
+typedef uint16_t u16;
+typedef int32_t s32;
+typedef uint32_t u32;
+typedef int64_t s64;
+typedef uint64_t u64;
 
 typedef unsigned int uint;
-typedef unsigned int size_t;
-
-#define NULL ((void*)0)
 
 #define assert(x)
 

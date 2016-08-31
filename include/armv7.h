@@ -12,7 +12,7 @@ static inline void* get_vbar(void) {
 }
 
 static inline void set_vbar(void* val) {
-	asm volatile("mcr p15, 0, %0, c12, c0, 0" : : "r" (val));
+	asm volatile("mcr p15, 0, %0, c12, c0, 0" : : "r" (val) : "memory");
 }
 
 static inline u32 get_cpsr(void) {
@@ -22,7 +22,7 @@ static inline u32 get_cpsr(void) {
 }
 
 static inline void set_cpsr(u32 cpsr) {
-    asm volatile("msr cpsr, %0" : : "r" (cpsr));
+    asm volatile("msr cpsr, %0" : : "r" (cpsr) : "memory");
 }
 
 static inline u32 disable_irq(void) {
@@ -47,7 +47,7 @@ static inline u32 get_ttbcr(void) {
 }
 
 static inline void set_ttbcr(u32 val) {
-	asm volatile("mcr p15, 0, %0, c2, c0, 2" : : "r" (val));
+	asm volatile("mcr p15, 0, %0, c2, c0, 2" : : "r" (val) : "memory");
 }
 
 
@@ -58,7 +58,7 @@ static inline u32 get_ttbr0(void) {
 }
 
 static inline void set_ttbr0(u32 val) {
-	asm volatile("mcr p15, 0, %0, c2, c0, 0" : : "r" (val));
+	asm volatile("mcr p15, 0, %0, c2, c0, 0" : : "r" (val) : "memory");
 }
 
 static inline u32 get_dacr(void) {
@@ -68,7 +68,7 @@ static inline u32 get_dacr(void) {
 }
 
 static inline void set_dacr(u32 val) {
-	asm volatile("mcr p15, 0, %0, c3, c0, 0" : : "r" (val));
+	asm volatile("mcr p15, 0, %0, c3, c0, 0" : : "r" (val) : "memory");
 }
 
 static inline u32 get_sctlr(void) {
@@ -78,7 +78,7 @@ static inline u32 get_sctlr(void) {
 }
 
 static inline void set_sctlr(u32 val) {
-	asm volatile("mcr p15, 0, %0, c1, c0, 0" : : "r" (val));
+	asm volatile("mcr p15, 0, %0, c1, c0, 0" : : "r" (val) : "memory");
 }
 
 #pragma GCC diagnostic push
