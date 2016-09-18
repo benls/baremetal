@@ -61,7 +61,7 @@ void sem_init(struct sem* sem);
 int sem_aq(struct sem* sem, u32 flags);
 void sem_rel(struct sem* sem);
 
-void cond_wait(struct cond* cond, struct cs_smp_lock *lock, u32 cpu_flags); 
+void cond_wait(struct cond* cond, struct cs_smp_lock *lock, u32 cpu_flags);
 void cond_signal(struct cond* cond);
 
 #endif
