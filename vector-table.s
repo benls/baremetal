@@ -32,9 +32,9 @@ b fiq
 irq:
 /* Save previous mode info */
 sub lr, lr, #4
-srsfd #0x1f!
+srsfd #0x13!
 /* Switch to system mode with irq disabled*/
-cps #0x1f
+cps #0x13
 /* push registers not saved by irq_handler*/
 push {r0-r3,r12}
 /* re-align stack on 64b boundary */
@@ -50,11 +50,4 @@ pop {r0, lr}
 add sp, sp, r0
 pop {r0-r3,r12}
 rfefd sp!
-
-vector_table_init:
-ldr r1, =0x92
-mrs r0, cpsr
-msr cpsr, r1
-msr cpsr, r0
-bx lr
 
