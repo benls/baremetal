@@ -28,6 +28,16 @@ static void putc_uart(void *arg, char c) {
     }
 }
 
+static void putc_poll(void *arg, char c) {
+    (void)arg;
+    if (c == '\n') {
+        uart_putc('\r');
+        uart_putc('\n');
+    } else {
+        uart_putc(c);
+    }
+}
+
 int printf(const char *format, ...) {
     va_list va;
     struct putc_buf buf;
@@ -45,3 +55,9 @@ int printf(const char *format, ...) {
     return buf.acc;
 }
 
+void printf_poll(const char *format, ...) {
+    va_list va;
+    va_start(va, format);
+    tfp_format(NULL, putc_poll, format, va);
+    va_end(va);
+}
