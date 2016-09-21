@@ -19,6 +19,8 @@ static void print_func() {
     for (;;) {
         sz = uart_read(buf, sizeof(buf), 1);
         if (sz > 0) {
+            if (buf[0] == 'z')
+                r32(0);
             uart_write(buf, sz, sz);
         }
     }
