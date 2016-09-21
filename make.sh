@@ -7,7 +7,7 @@ PREFIX=arm-none-eabi-
 CC=${PREFIX}gcc
 OBJCOPY=${PREFIX}objcopy
 libgcc_path=$($CC -print-libgcc-file-name)
-gcc_flags=" -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb"
+gcc_flags=" -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access"
 c_flags=" -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0"
 $CC $gcc_flags -c start.s
 $CC $gcc_flags -c task_switch.s
