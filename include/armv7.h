@@ -25,6 +25,16 @@ static inline void set_cpsr(u32 cpsr) {
     asm volatile("msr cpsr, %0" : : "r" (cpsr) : "memory");
 }
 
+static inline u32 get_spsr(void) {
+    u32 spsr;
+    asm volatile("mrs %0, spsr" : "=r" (spsr));
+    return spsr;
+}
+
+static inline void set_spsr(u32 cpsr) {
+    asm volatile("msr spsr, %0" : : "r" (cpsr) : "memory");
+}
+
 static inline u32 disable_irq(void) {
     u32 cpsr;
     cpsr = get_cpsr();
@@ -102,6 +112,30 @@ static inline void cs_smp_rel(struct cs_smp_lock *lock, u32 cpu_flags) {
 
 static inline void cs_smp_init(struct cs_smp_lock *lock){
     (void)lock;
+}
+
+static inline int syscall_1(uint syscall_nr, int a) {
+    register int a1 asm("r0") = a;
+    register int nr asm("r7") = syscall_nr;
+    asm volatile("svc 0" : "=r" (a1) : "r" (nr), "r" (a1) : "memory");
+    return a1;
+}
+
+//just for debugging
+static inline int syscall_1_from_svc(uint syscall_nr, int a) {
+    int spsr;
+    int lr;
+    int ret;
+
+    spsr = get_spsr();
+	asm volatile("mov %0, lr" : "=r" (lr));
+
+    ret = syscall_1(syscall_nr, a);
+
+    set_spsr(spsr);
+    asm volatile("mov lr, %0" : : "r" (lr));
+
+    return ret;
 }
 
 #endif

@@ -163,8 +163,8 @@ void uart_init(void) {
 #define RX_TRIG 1
 #define TX_TRIG 30
 #define TX_FIFO_SZ 64
-/* TODO: Why does this need the -10 */
-#define TX_SZ (TX_FIFO_SZ - TX_TRIG)
+//TODO: -10
+#define TX_SZ (TX_FIFO_SZ - TX_TRIG - 10)
 
 static uint buffer_remove_atomic(struct buffer* b, void *data, uint sz){
     sz = sz > b->read_buf_cnt ? b->read_buf_cnt : sz;
@@ -204,7 +204,6 @@ static inline void tx_isr(void) {
     /* Disable interrupt when TX buffer is empty */
     if (b.write_buf_cnt == 0)
         uart_w16(IER, uart_r16(IER) & ~IER_THR);
-    asm volatile("dsb" : : : "memory");
 
     /* Wake writer */
     if (b.write_req && sizeof(b.write_buf) - b.write_buf_cnt >= b.write_req)
