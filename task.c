@@ -2,17 +2,23 @@
 #include "os.h"
 #include "armv7.h"
 
+extern void new_task_shim(void);
+
 /*
 stk 100
-     FC r14
-     F8 r11
-     F4 r10
-     F0 r9
-     EC r8
-     E8 r7
-     E4 r6
-     E0 r5
-sp   DC r4
+     -- Popped by new_task_shim --
+     FC pc_new
+     F8 lr_new
+     -- Popped by do_task_switch --
+     F4 lr
+     F0 r11
+     EC r10
+     E8 r9
+     E4 r8
+     E0 r7
+     DC r6
+     D8 r5
+sp   D4 r4
 */
 
 struct cpu_regs {
@@ -25,6 +31,8 @@ struct cpu_regs {
     u32 r10;
     u32 r11;
     u32 lr;
+    u32 lr_new;
+    u32 pc_new;
 };
 
 struct task* current_task;
@@ -38,7 +46,9 @@ void init_task(struct task *task, void (*func)(void), void* stack) {
     task->sp = (u32)stack - sizeof(struct cpu_regs);
     regs = (void*)task->sp;
     memset(regs, 0, sizeof(*regs));
-    regs->lr = (u32)func;
+    regs->lr = (u32)new_task_shim;
+    regs->pc_new = (u32)func;
+    regs->lr_new = (u32)dequeue_current_task;
 }
 
 void task_switch(void) {
@@ -52,6 +62,5 @@ void task_switch(void) {
         current_task = next_task;
         do_task_switch(current_task, old);
     }
-    enable_irq();
 }
 

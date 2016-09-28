@@ -62,8 +62,16 @@ void dequeue_current_task_locked(void) {
 
 void queue_task(struct task *task) {
     u32 flags;
-    flags = disable_irq();
+    flags = lock_runqueue();
     queue_task_locked(task);
-    set_cpsr(flags);
+    rel_runqueue(flags);
 }
 
+void dequeue_current_task(void) {
+    u32 flags;
+    flags = lock_runqueue();
+    dequeue_current_task_locked();
+    schedule_locked();
+    rel_runqueue(flags);
+    task_switch();
+}

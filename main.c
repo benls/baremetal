@@ -4,11 +4,16 @@
 #include "armv7.h"
 #include "interrupt.h"
 #include "timer.h"
+#include "pages.h"
 
 extern char __bss_start;
 extern char __bss_end;
 
 static void disable_watchdog(void);
+
+static void stage2(void);
+static struct task stage2_task;
+static align(8) u8 stage2_stack[4096];
 
 void init_blink(void);
 void init_print_ab(void);
@@ -20,11 +25,18 @@ void init_os(void) {
     init_interrupt();
     timer_init();
     uart_init();
-    enable_irq(); //needed?
     init_sched();
+    init_task(&stage2_task,
+            stage2,
+            stage2_stack + sizeof(stage2_stack));
+    queue_task(&stage2_task);
+    sched_start(); /* Never returns */
+}
+
+static void stage2(void) {
+    init_pages();
     init_blink();
     init_print_ab();
-    sched_start(); /* Never returns */
 }
 
 #define WDT_WSPR 0x44E35048

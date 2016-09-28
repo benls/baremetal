@@ -43,6 +43,7 @@ static inline void rel_runqueue(u32 cpu_flags) {
 void init_task(struct task *task, void (*func)(void), void* stack);
 void init_sched(void);
 void queue_task(struct task* task);
+void dequeue_current_task(void);
 void dequeue_current_task_locked(void);
 void task_switch(void);
 void sched_start(void);

@@ -29,6 +29,7 @@ $CC $gcc_flags $c_flags -c ./print-ab.c
 $CC $gcc_flags $c_flags -c ./printf.c
 $CC $gcc_flags $c_flags -c ./dabt.c
 $CC $gcc_flags $c_flags -c ./syscall.c
-$CC $gcc_flags -T start.ld -lgcc -Wl,-Map=output.map -o start.elf start.o main.o uart.o task_switch.o task.o timer.o vector-table.o intc_am335x.o oslib.o tinyprintf.o schedule.o wait.o blink.o background.o print-ab.o sem.o cond.o printf.o dabt.o syscall.o $libgcc_path
+$CC $gcc_flags $c_flags -c ./pages.c
+$CC $gcc_flags -T start.ld -lgcc -Wl,-Map=output.map -o start.elf start.o main.o uart.o task_switch.o task.o timer.o vector-table.o intc_am335x.o oslib.o tinyprintf.o schedule.o wait.o blink.o background.o print-ab.o sem.o cond.o printf.o dabt.o syscall.o pages.o $libgcc_path
 $OBJCOPY start.elf -O binary start.bin
 
