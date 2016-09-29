@@ -2,11 +2,11 @@
 #include "os.h"
 #include "armv7.h"
 
-extern void new_task_shim(void);
+extern void task_entry_shim(void);
 
 /*
 stk 100
-     -- Popped by new_task_shim --
+     -- Popped by task_entry_shim --
      FC pc_new
      F8 lr_new
      -- Popped by do_task_switch --
@@ -46,7 +46,7 @@ void init_task(struct task *task, void (*func)(void), void* stack) {
     task->sp = (u32)stack - sizeof(struct cpu_regs);
     regs = (void*)task->sp;
     memset(regs, 0, sizeof(*regs));
-    regs->lr = (u32)new_task_shim;
+    regs->lr = (u32)task_entry_shim;
     regs->pc_new = (u32)func;
     regs->lr_new = (u32)dequeue_current_task;
 }

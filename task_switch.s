@@ -1,5 +1,5 @@
 .globl do_task_switch
-.globl new_task_shim
+.globl task_entry_shim
 
 .section ".text"
 
@@ -27,7 +27,7 @@ do_task_switch:
 /* Entry point for new tasks.
  * Pop the real return address and pc from the stack.
 */
-new_task_shim:
+task_entry_shim:
     pop {lr,pc}
 
 
