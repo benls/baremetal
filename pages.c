@@ -18,7 +18,7 @@ static uint cursor;
 static uint free_pages;
 
 static inline void set_page(uint page) {
-    free_pages--;
+    free_pages--; //TODO: check if already set?
     pages[page/32] |= 1 << (page % 32);
 }
 
@@ -43,18 +43,30 @@ void init_pages(void) {
     printf("%u free pages\n", free_pages);
 }
 
-//TODO: need contiguous pages?
-void* alloc_page(void) {
+void* alloc_pages_contig(uint n_pages) {
+    uint start;
+    uint prev_cursor;
     uint page;
-    if (free_pages == 0)
+    uint n;
+    if (free_pages < n_pages)
         return NULL;
+    start = cursor;
     for (;;) {
         page = cursor;
-        cursor = (cursor + 1) % N_PAGES;
-        if (!get_page_bit(page)) {
-            set_page(page);
-            return PAGE_TO_ADDR(page);
-        }
+        n = n_pages;
+        do {
+            prev_cursor = cursor;
+            cursor = (cursor + 1) % N_PAGES;
+            if (prev_cursor < page || get_page_bit(prev_cursor))
+                break;
+            if (cursor == start)
+                return NULL;
+            } while(--n);
+        if (n == 0)
+            break;
     }
+    for(uint i = 0; i < n_pages; i++) 
+        set_page(page + i);
+    return PAGE_TO_ADDR(page);
 }
 

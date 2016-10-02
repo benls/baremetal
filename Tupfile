@@ -1,0 +1,12 @@
+
+GCC_FLAGS += -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access
+CFLAGS += -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 
+
+: foreach *.c ./tinyprintf/tinyprintf.c |> arm-none-eabi-gcc $(GCC_FLAGS) $(CFLAGS) -c %f -o %o |> %B.o
+
+: foreach *.s *.S |> arm-none-eabi-gcc $(GCC_FLAGS) -c %f -o %o |> %B.o
+
+: *.o |> arm-none-eabi-gcc $(GCC_FLAGS) -T start.ld -lgcc -Wl,-Map=start.map -o start.elf %f `arm-none-eabi-gcc -print-libgcc-file-name` |> start.elf start.map
+
+: start.elf |> arm-none-eabi-objcopy %f -O binary %o |> %B.bin
+
