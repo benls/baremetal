@@ -1,35 +1,25 @@
-#! /bin/bash
-
-set -e
-set -v
-
-PREFIX=arm-none-eabi-
-CC=${PREFIX}gcc
-OBJCOPY=${PREFIX}objcopy
-libgcc_path=$($CC -print-libgcc-file-name)
-gcc_flags=" -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access"
-c_flags=" -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0"
-$CC $gcc_flags -c start.s
-$CC $gcc_flags -c task_switch.s
-$CC $gcc_flags -c vector-table.s
-$CC $gcc_flags $c_flags -c main.c
-$CC $gcc_flags $c_flags -c uart.c
-$CC $gcc_flags $c_flags -c task.c
-$CC $gcc_flags $c_flags -c timer.c
-$CC $gcc_flags $c_flags -c ./intc_am335x.c
-$CC $gcc_flags $c_flags -c ./oslib.c
-$CC $gcc_flags $c_flags -c ./tinyprintf/tinyprintf.c
-$CC $gcc_flags $c_flags -c ./schedule.c
-$CC $gcc_flags $c_flags -c ./wait.c
-$CC $gcc_flags $c_flags -c ./blink.c
-$CC $gcc_flags $c_flags -c ./background.c
-$CC $gcc_flags $c_flags -c ./sem.c
-$CC $gcc_flags $c_flags -c ./cond.c
-$CC $gcc_flags $c_flags -c ./print-ab.c
-$CC $gcc_flags $c_flags -c ./printf.c
-$CC $gcc_flags $c_flags -c ./dabt.c
-$CC $gcc_flags $c_flags -c ./syscall.c
-$CC $gcc_flags $c_flags -c ./pages.c
-$CC $gcc_flags -T start.ld -lgcc -Wl,-Map=output.map -o start.elf start.o main.o uart.o task_switch.o task.o timer.o vector-table.o intc_am335x.o oslib.o tinyprintf.o schedule.o wait.o blink.o background.o print-ab.o sem.o cond.o printf.o dabt.o syscall.o pages.o $libgcc_path
-$OBJCOPY start.elf -O binary start.bin
-
+#! /bin/sh -e
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c background.c -o background.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c blink.c -o blink.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c cond.c -o cond.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c dabt.c -o dabt.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c intc_am335x.c -o intc_am335x.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c main.c -o main.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c mem.c -o mem.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c oslib.c -o oslib.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c pages.c -o pages.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c print-ab.c -o print-ab.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c printf.c -o printf.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c schedule.c -o schedule.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c sem.c -o sem.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c syscall.c -o syscall.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c task.c -o task.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c timer.c -o timer.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c uart.c -o uart.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c wait.c -o wait.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -Wall -Wextra -std=gnu99 -pedantic -I./include -I./tinyprintf -DTINYPRINTF_DEFINE_TFP_SPRINTF=1 -DTINYPRINTF_DEFINE_TFP_PRINTF=0 -c ./tinyprintf/tinyprintf.c -o tinyprintf.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -c start.s -o start.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -c task_switch.s -o task_switch.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -c vector-table.s -o vector-table.o
+arm-none-eabi-gcc -flto -mcpu=cortex-a8 -ffreestanding -fno-builtin -nostdlib -march=armv7-a -marm -O3 -ggdb -mno-unaligned-access -T start.ld -lgcc -Wl,-Map=start.map -o start.elf background.o blink.o cond.o dabt.o intc_am335x.o main.o mem.o oslib.o pages.o print-ab.o printf.o schedule.o sem.o start.o syscall.o task.o task_switch.o timer.o tinyprintf.o uart.o vector-table.o wait.o `arm-none-eabi-gcc -print-libgcc-file-name`
+arm-none-eabi-objcopy start.elf -O binary start.bin
